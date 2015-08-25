@@ -40,7 +40,7 @@ function cms_multishop()
         $cms = array(
             'id_cms' => $value['id_cms'],
             'id_lang' => $value['id_lang'],
-            'content' => pSQL($value['content']),
+            'content' => pSQL($value['content'], true),
             'link_rewrite' => pSQL($value['link_rewrite']),
             'meta_title' => pSQL($value['meta_title']),
             'meta_keywords' => pSQL($value['meta_keywords']),
@@ -70,7 +70,7 @@ function cms_multishop()
             'id_cms_category' => $value['id_cms_category'],
             'id_lang' => $value['id_lang'],
             'name' => pSQL($value['name']),
-            'description' => pSQL($value['description']),
+            'description' => pSQL($value['description'], true),
             'link_rewrite' => pSQL($value['link_rewrite']),
             'meta_title' => pSQL($value['meta_title']),
             'meta_keywords' => pSQL($value['meta_keywords']),
