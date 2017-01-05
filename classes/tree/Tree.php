@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -37,6 +37,7 @@ class TreeCore
     protected $_data;
     protected $_data_search;
     protected $_headerTemplate;
+    protected $_id_tree;
     private $_id;
     protected $_node_folder_template;
     protected $_node_item_template;
@@ -106,6 +107,17 @@ class TreeCore
 
         $this->_attributes = $value;
         return $this;
+    }
+
+    public function setIdTree($id_tree)
+    {
+        $this->_id_tree = $id_tree;
+        return $this;
+    }
+
+    public function getIdTree()
+    {
+        return $this->_id_tree;
     }
 
     public function getAttributes()
@@ -407,7 +419,8 @@ class TreeCore
         //Assign Tree nodes
         $template->assign($this->getAttributes())->assign(array(
             'id'    => $this->getId(),
-            'nodes' => $this->renderNodes($data)
+            'nodes' => $this->renderNodes($data),
+            'id_tree' => $this->getIdTree()
         ));
 
         return (isset($html) ? $html : '').$template->fetch();

@@ -1,4 +1,29 @@
 <?php
+/**
+ * 2007-2016 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ * @author    PrestaShop SA <contact@prestashop.com>
+ * @copyright 2007-2016 PrestaShop SA
+ * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * International Registered Trademark & Property of PrestaShop SA
+ */
+
 
 class Cart extends CartCore
 {
@@ -18,7 +43,7 @@ class Cart extends CartCore
     protected static $_attributesLists = array();
     protected static $_customer = null;
 
-    public static function deleteProduct($id_product, $id_product_attribute = null, $id_customization = null, $id_address_delivery = 0)
+    public function deleteProduct($id_product, $id_product_attribute = null, $id_customization = null, $id_address_delivery = 0)
     {
         $result = Hook::exec('ppbsDeleteCartProduct', array(
                 'id_product' => $id_product,
@@ -45,7 +70,7 @@ class Cart extends CartCore
             }
         } else {
             $params = Hook::exec('ppbsGetProducts', array('products'=>$products), null);
-            $params = Tools::jsonDecode($params, true);
+            $params = json_decode($params, true);
             if (isset($params['products'])) {
                 return $params['products'];
             } else {

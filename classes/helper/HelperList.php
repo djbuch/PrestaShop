@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -148,7 +148,13 @@ class HelperListCore extends Helper
         $this->_list = $list;
         $this->fields_list = $fields_display;
 
-        $this->orderBy = preg_replace('/^([a-z _]*!)/Ui', '', $this->orderBy);
+        $patternsOrderBy = array(
+            '/^([a-z _]*!)/Ui',     // remove a. for example
+            '/^([a-z _]*\.)/Ui',    // remove a! for example
+            '/`/',                  // remove ` char
+        );
+        $this->orderBy = preg_replace($patternsOrderBy, '', $this->orderBy);
+
         $this->orderWay = preg_replace('/^([a-z _]*!)/Ui', '', $this->orderWay);
 
         $this->tpl->assign(array(
@@ -236,11 +242,17 @@ class HelperListCore extends Helper
                     $is_first = false;
 
                     if (!preg_match('/a\s*.*class/', $this->_list[$index][$action])) {
-                        $this->_list[$index][$action] = preg_replace('/href\s*=\s*\"([^\"]*)\"/',
-                            'href="$1" class="btn btn-default"', $this->_list[$index][$action]);
+                        $this->_list[$index][$action] = preg_replace(
+                            '/href\s*=\s*\"([^\"]*)\"/',
+                            'href="$1" class="btn btn-default"',
+                            $this->_list[$index][$action]
+                        );
                     } elseif (!preg_match('/a\s*.*class\s*=\s*\".*btn.*\"/', $this->_list[$index][$action])) {
-                        $this->_list[$index][$action] = preg_replace('/a(\s*.*)class\s*=\s*\"(.*)\"/',
-                            'a $1 class="$2 btn btn-default"', $this->_list[$index][$action]);
+                        $this->_list[$index][$action] = preg_replace(
+                            '/a(\s*.*)class\s*=\s*\"(.*)\"/',
+                            'a $1 class="$2 btn btn-default"',
+                            $this->_list[$index][$action]
+                        );
                     }
                 }
             }
@@ -326,8 +338,13 @@ class HelperListCore extends Helper
             }
         }
 
+        $showShopColumn = $this->shopLinkType;
+
+        $isMultiShopActive = Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE');
+
         $this->content_tpl->assign(array_merge($this->tpl_vars, array(
-            'shop_link_type' => $this->shopLinkType,
+            'shop_link_type' => $showShopColumn,
+            'multishop_active' => $isMultiShopActive,
             'name' => isset($name) ? $name : null,
             'position_identifier' => $this->position_identifier,
             'identifier' => $this->identifier,
@@ -389,7 +406,6 @@ class HelperListCore extends Helper
         return $tpl->fetch();
     }
 
-
     /**
      * Display action show details of a table row
      * This action need an ajax request with a return like this:
@@ -428,7 +444,7 @@ class HelperListCore extends Helper
             'token' => $token != null ? $token : $this->token,
             'action' => self::$cache_lang['Details'],
             'params' => $ajax_params,
-            'json_params' => Tools::jsonEncode($ajax_params)
+            'json_params' => json_encode($ajax_params)
         ));
         return $tpl->fetch();
     }
@@ -461,8 +477,24 @@ class HelperListCore extends Helper
             self::$cache_lang['Edit'] = $this->l('Edit', 'Helper');
         }
 
+        $href = $this->currentIndex.'&'.$this->identifier.'='.$id.'&update'.$this->table.($this->page && $this->page > 1 ? '&page='.(int)$this->page : '').'&token='.($token != null ? $token : $this->token);
+
+        switch ($this->currentIndex) {
+            case 'index.php?controller=AdminProducts':
+            case 'index.php?tab=AdminProducts':
+                // New architecture modification: temporary behavior to switch between old and new controllers.
+                global $kernel; // sf kernel
+                $pagePreference = $kernel->getContainer()->get('prestashop.core.admin.page_preference_interface');
+                $redirectLegacy = $pagePreference->getTemporaryShouldUseLegacyPage('product');
+                if (!$redirectLegacy && $this->identifier == 'id_product') {
+                    $href = Context::getContext()->link->getAdminLink('AdminProducts', true, ['id_product' => $id, 'updateproduct' => 1]);
+                }
+                break;
+            default:
+        }
+
         $tpl->assign(array(
-            'href' => $this->currentIndex.'&'.$this->identifier.'='.$id.'&update'.$this->table.($this->page && $this->page > 1 ? '&page='.(int)$this->page : '').'&token='.($token != null ? $token : $this->token),
+            'href' => $href,
             'action' => self::$cache_lang['Edit'],
             'id' => $id
         ));
@@ -493,9 +525,25 @@ class HelperListCore extends Helper
             $name = addcslashes('\n\n'.self::$cache_lang['Name'].' '.$name, '\'');
         }
 
+        $href = $this->currentIndex.'&'.$this->identifier.'='.$id.'&delete'.$this->table.'&token='.($token != null ? $token : $this->token);
+
+        switch ($this->currentIndex) {
+            case 'index.php?controller=AdminProducts':
+            case 'index.php?tab=AdminProducts':
+                // New architecture modification: temporary behavior to switch between old and new controllers.
+                global $kernel; // sf kernel
+                $pagePreference = $kernel->getContainer()->get('prestashop.core.admin.page_preference_interface');
+                $redirectLegacy = $pagePreference->getTemporaryShouldUseLegacyPage('product');
+                if (!$redirectLegacy && $this->identifier == 'id_product') {
+                    $href = Context::getContext()->link->getAdminLink('AdminProducts', true, ['id_product' => $id, 'deleteproduct' => 1]);
+                }
+                break;
+            default:
+        }
+
         $data = array(
             $this->identifier => $id,
-            'href' => $this->currentIndex.'&'.$this->identifier.'='.$id.'&delete'.$this->table.'&token='.($token != null ? $token : $this->token),
+            'href' => $href,
             'action' => self::$cache_lang['Delete'],
         );
 
@@ -574,7 +622,8 @@ class HelperListCore extends Helper
         $this->page = (int)$page;
 
         /* Choose number of results per page */
-        $selected_pagination = Tools::getValue($this->list_id.'_pagination',
+        $selected_pagination = Tools::getValue(
+            $this->list_id.'_pagination',
             isset($this->context->cookie->{$this->list_id.'_pagination'}) ? $this->context->cookie->{$this->list_id.'_pagination'} : $this->_default_pagination
         );
 
@@ -593,7 +642,11 @@ class HelperListCore extends Helper
                 $params['type'] = 'text';
             }
 
-            $value_key = $prefix.$this->list_id.'Filter_'.(array_key_exists('filter_key', $params) && $key != 'active' ? $params['filter_key'] : $key);
+            $value_key = $prefix.$this->list_id.'Filter_'.(array_key_exists('filter_key', $params) ? $params['filter_key'] : $key);
+            if ($key == 'active' && strpos($key, '!') !== false) {
+                $keys = explode('!', $params['filter_key']);
+                $value_key = $keys[1];
+            }
             $value = Context::getContext()->cookie->{$value_key};
             if (!$value && Tools::getIsset($value_key)) {
                 $value = Tools::getValue($value_key);
@@ -675,13 +728,15 @@ class HelperListCore extends Helper
             'toolbar_scroll' => $this->toolbar_scroll,
             'toolbar_btn' => $this->toolbar_btn,
             'has_bulk_actions' => $this->hasBulkActions($has_value),
+            'filters_has_value' => (bool)$has_value
         ));
+
+        $isMultiShopActive = Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE');
 
         $this->header_tpl->assign(array_merge(array(
             'ajax' => $ajax,
             'title' => array_key_exists('title', $this->tpl_vars) ? $this->tpl_vars['title'] : $this->title,
             'show_filters' => ((count($this->_list) > 1 && $has_search_field) || $has_value),
-            'filters_has_value' => $has_value,
             'currentIndex' => $this->currentIndex,
             'action' => $action,
             'is_order_position' => $this->position_identifier && $this->orderBy == 'position',
@@ -692,6 +747,7 @@ class HelperListCore extends Helper
             'identifier' => $this->identifier,
             'id_cat' => $id_cat,
             'shop_link_type' => $this->shopLinkType,
+            'multishop_active' => $isMultiShopActive,
             'has_actions' => !empty($this->actions),
             'table_id' => isset($this->table_id) ? $this->table_id : null,
             'table_dnd' => isset($table_dnd) ? $table_dnd : null,

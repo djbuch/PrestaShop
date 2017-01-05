@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -31,59 +31,60 @@
  */
 class CacheXcacheCore extends Cache
 {
-	public function __construct()
-	{
-		$this->keys = xcache_get(self::KEYS_NAME);
-		if (!is_array($this->keys))
-			$this->keys = array();
-	}
+    public function __construct()
+    {
+        $this->keys = xcache_get(self::KEYS_NAME);
+        if (!is_array($this->keys)) {
+            $this->keys = array();
+        }
+    }
 
-	/**
-	 * @see Cache::_set()
-	 */
-	protected function _set($key, $value, $ttl = 0)
-	{
-		return xcache_set($key, $value, $ttl);
-	}
+    /**
+     * @see Cache::_set()
+     */
+    protected function _set($key, $value, $ttl = 0)
+    {
+        return xcache_set($key, $value, $ttl);
+    }
 
-	/**
-	 * @see Cache::_get()
-	 */
-	protected function _get($key)
-	{
-		return xcache_isset($key) ? xcache_get($key) : false;
-	}
+    /**
+     * @see Cache::_get()
+     */
+    protected function _get($key)
+    {
+        return xcache_isset($key) ? xcache_get($key) : false;
+    }
 
-	/**
-	 * @see Cache::_exists()
-	 */
-	protected function _exists($key)
-	{
-		return xcache_isset($key);
-	}
+    /**
+     * @see Cache::_exists()
+     */
+    protected function _exists($key)
+    {
+        return xcache_isset($key);
+    }
 
-	/**
-	 * @see Cache::_delete()
-	 */
-	protected function _delete($key)
-	{
-		return xcache_unset($key);
-	}
+    /**
+     * @see Cache::_delete()
+     */
+    protected function _delete($key)
+    {
+        return xcache_unset($key);
+    }
 
-	/**
-	 * @see Cache::_writeKeys()
-	 */
-	protected function _writeKeys()
-	{
-		xcache_set(self::KEYS_NAME, $this->keys);
-	}
+    /**
+     * @see Cache::_writeKeys()
+     */
+    protected function _writeKeys()
+    {
+        xcache_set(self::KEYS_NAME, $this->keys);
+    }
 
-	/**
-	 * @see Cache::flush()
-	 */
-	public function flush()
-	{
-		$this->delete('*');
-		return true;
-	}
+    /**
+     * @see Cache::flush()
+     */
+    public function flush()
+    {
+        $this->delete('*');
+        return true;
+    }
 }

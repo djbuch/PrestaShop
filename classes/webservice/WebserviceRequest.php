@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -255,7 +255,7 @@ class WebserviceRequestCore
     public static function getResources()
     {
         $resources = array(
-            'addresses' => array('description' => 'The Customer, Manufacturer and Customer addresses','class' => 'Address'),
+            'addresses' => array('description' => 'The Customer, Brand and Customer addresses','class' => 'Address'),
             'carriers' => array('description' => 'The Carriers','class' => 'Carrier'),
             'carts' => array('description' => 'Customer\'s carts', 'class' => 'Cart'),
             'cart_rules' => array('description' => 'Cart rules management', 'class' => 'CartRule'),
@@ -274,10 +274,10 @@ class WebserviceRequestCore
             'images' => array('description' => 'The images', 'specific_management' => true),
             'image_types' => array('description' => 'The image types', 'class' => 'ImageType'),
             'languages' => array('description' => 'Shop languages', 'class' => 'Language'),
-            'manufacturers' => array('description' => 'The product manufacturers','class' => 'Manufacturer'),
+            'manufacturers' => array('description' => 'The product brands','class' => 'Manufacturer'),
+            'messages' => array('description' => 'The Messages','class' => 'Message'),
             'order_carriers' => array('description' => 'The Order carriers','class' => 'OrderCarrier'),
             'order_details' => array('description' => 'Details of an order', 'class' => 'OrderDetail'),
-            'order_discounts' => array('description' => 'Discounts of an order', 'class' => 'OrderDiscount'),
             'order_histories' => array('description' => 'The Order histories','class' => 'OrderHistory'),
             'order_invoices' => array('description' => 'The Order invoices','class' => 'OrderInvoice'),
             'orders' => array('description' => 'The Customers orders','class' => 'Order'),
@@ -323,6 +323,14 @@ class WebserviceRequestCore
             'product_customization_fields' => array('description' => 'Customization Field', 'class' => 'CustomizationField'),
             'customizations' => array('description' => 'Customization values', 'class' => 'Customization'),
         );
+        $extra_resources = Hook::exec('addWebserviceResources', array('resources' => $resources), null, true, false);
+        if (is_array($extra_resources) && count($extra_resources)) {
+            foreach ($extra_resources as $new_resources) {
+                if (is_array($new_resources) && count($new_resources)) {
+                    $resources = array_merge($resources, $new_resources);
+                }
+            }
+        }
         ksort($resources);
         return $resources;
     }
@@ -1428,7 +1436,7 @@ class WebserviceRequestCore
                             $this->setError(400, 'parameter "'.$fieldName.'" not writable. Please remove this attribute of this XML', 93);
                             return false;
                         } else {
-                            $object->$fieldProperties['setter']((string)$attributes->$fieldName);
+                            $object->{$fieldProperties['setter']}((string)$attributes->$fieldName);
                         }
                     } elseif (property_exists($object, $sqlId)) {
                         $object->$sqlId = (string)$attributes->$fieldName;
@@ -1565,7 +1573,10 @@ class WebserviceRequestCore
             } elseif ($matches[1] == '<') {
                 $ret .= ' AND '.$tableAlias.'`'.bqSQL($sqlId).'` < "'.pSQL($matches[2])."\"\n";
             } elseif ($matches[1] == '!') {
-                $ret .= ' AND '.$tableAlias.'`'.bqSQL($sqlId).'` != "'.pSQL($matches[2])."\"\n";
+                $multiple_values = explode('|', $matches[2]);
+                foreach ($multiple_values as $value) {
+                    $ret .= ' AND '.$tableAlias.'`'.bqSQL($sqlId).'` != "'.pSQL($value)."\"\n";
+                }
             }
         } else {
             $ret .= ' AND '.$tableAlias.'`'.bqSQL($sqlId).'` '.(Validate::isFloat(pSQL($filterValue)) ? 'LIKE' : '=').' "'.pSQL($filterValue)."\"\n";

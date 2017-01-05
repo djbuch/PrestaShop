@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,10 +19,13 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
+
+use PrestaShop\PrestaShop\Core\Cldr\Update;
+use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 
 class LocalizationPackCore
 {
@@ -43,12 +46,19 @@ class LocalizationPackCore
         $this->name = (string)$main_attributes['name'];
         $this->version = (string)$main_attributes['version'];
         if ($iso_localization_pack) {
-            $id_country = Country::getByIso($iso_localization_pack);
-            $country = new Country($id_country);
+            $id_country = (int)Country::getByIso($iso_localization_pack);
+
+            if ($id_country) {
+                $country = new Country($id_country);
+            }
+            if (!$id_country || !Validate::isLoadedObject($country)) {
+                $this->_errors[] = Tools::displayError(sprintf('Cannot load country : %1d', $id_country));
+                return false;
+            }
             if (!$country->active) {
                 $country->active = 1;
                 if (!$country->update()) {
-                    $this->_errors[] = Tools::displayError('Cannot enable the associated country: ').$country->name;
+                    $this->_errors[] = Tools::displayError(sprintf('Cannot enable the associated country: %1s', $country->name));
                 }
             }
         }
@@ -88,6 +98,18 @@ class LocalizationPackCore
             foreach ($selection as $selected) {
                 // No need to specify the install_mode because if the selection mode is used, then it's not the install
                 $res &= Validate::isLocalizationPackSelection($selected) ? $this->{'_install'.$selected}($xml) : false;
+            }
+        }
+
+        //get/update cldr datas for each language
+        if ($iso_localization_pack) {
+            foreach ($xml->languages->language as $lang) {
+                //use this to get correct language code ex : qc become fr
+                $languageCode = explode('-', Language::getLanguageCodeByIso($lang['iso_code']));
+                $isoCode = $languageCode[0].'-'.strtoupper($iso_localization_pack);
+
+                $cldrUpdate = new Update(_PS_TRANSLATIONS_DIR_);
+                $cldrUpdate->fetchLocale($isoCode);
             }
         }
 
@@ -223,7 +245,7 @@ class LocalizationPackCore
                         continue;
                     }
 
-                    $id_country = Country::getByIso(strtoupper($rule_attributes['iso_code_country']));
+                    $id_country = (int)Country::getByIso(strtoupper($rule_attributes['iso_code_country']));
                     if (!$id_country) {
                         continue;
                     }
@@ -276,7 +298,7 @@ class LocalizationPackCore
             foreach ($xml->currencies->currency as $data) {
                 /** @var SimpleXMLElement $data */
                 $attributes = $data->attributes();
-                if (Currency::exists($attributes['iso_code'], (int)$attributes['iso_code_num'])) {
+                if (Currency::exists($attributes['iso_code'])) {
                     continue;
                 }
                 $currency = new Currency();
@@ -293,7 +315,7 @@ class LocalizationPackCore
                     $this->_errors[] = Tools::displayError('Invalid currency properties.');
                     return false;
                 }
-                if (!Currency::exists($currency->iso_code, $currency->iso_code_num)) {
+                if (!Currency::exists($currency->iso_code)) {
                     if (!$currency->add()) {
                         $this->_errors[] = Tools::displayError('An error occurred while importing the currency: ').strval($attributes['name']);
                         return false;
@@ -314,6 +336,8 @@ class LocalizationPackCore
 
         return true;
     }
+
+
 
     /**
      * @param SimpleXMLElement $xml
@@ -388,14 +412,17 @@ class LocalizationPackCore
                 $name = (string)$attributes['name'];
                 if (isset($name) && $module = Module::getInstanceByName($name)) {
                     $install = ($attributes['install'] == 1) ? true : false;
+                    $moduleManagerBuilder = ModuleManagerBuilder::getInstance();
+                    $moduleManager = $moduleManagerBuilder->build();
+
 
                     if ($install) {
-                        if (!Module::isInstalled($name)) {
+                        if (!$moduleManager->isInstalled($name)) {
                             if (!$module->install()) {
                                 $this->_errors[] = Tools::displayError('An error occurred while installing the module:').$name;
                             }
                         }
-                    } elseif (Module::isInstalled($name)) {
+                    } elseif ($moduleManager->isInstalled($name)) {
                         if (!$module->uninstall()) {
                             $this->_errors[] = Tools::displayError('An error occurred while uninstalling the module:').$name;
                         }

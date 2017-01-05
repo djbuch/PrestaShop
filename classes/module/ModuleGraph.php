@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -75,10 +75,10 @@ abstract class ModuleGraphCore extends Module
             if (is_callable(array($this, 'setDayValues'))) {
                 $this->setDayValues($layers);
             }
-        }
-        // If the granularity is inferior to 1 month
-        // @TODO : change to manage 28 to 31 days
-        elseif (strtotime($this->_employee->stats_date_to) - strtotime($this->_employee->stats_date_from) <= 2678400) {
+        } elseif (strtotime($this->_employee->stats_date_to) - strtotime($this->_employee->stats_date_from) <= 2678400) {
+            // If the granularity is inferior to 1 month
+            // @TODO : change to manage 28 to 31 days
+
             if ($legend) {
                 $days = array();
                 if ($from_array['mon'] == $to_array['mon']) {
@@ -108,9 +108,9 @@ abstract class ModuleGraphCore extends Module
             if (is_callable(array($this, 'setMonthValues'))) {
                 $this->setMonthValues($layers);
             }
-        }
-        // If the granularity is less than 1 year
-        elseif (strtotime('-1 year', strtotime($this->_employee->stats_date_to)) < strtotime($this->_employee->stats_date_from)) {
+        } elseif (strtotime('-1 year', strtotime($this->_employee->stats_date_to)) < strtotime($this->_employee->stats_date_from)) {
+            // If the granularity is less than 1 year
+
             if ($legend) {
                 $months = array();
                 if ($from_array['year'] == $to_array['year']) {
@@ -139,9 +139,9 @@ abstract class ModuleGraphCore extends Module
             if (is_callable(array($this, 'setYearValues'))) {
                 $this->setYearValues($layers);
             }
-        }
-        // If the granularity is greater than 1 year
-        else {
+        } else {
+            // If the granularity is greater than 1 year
+
             if ($legend) {
                 $years = array();
                 for ($i = $from_array['year']; $i <= $to_array['year']; ++$i) {

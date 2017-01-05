@@ -1,27 +1,27 @@
-{*
-* 2007-2015 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-* @author    PrestaShop SA <contact@prestashop.com>
-* @copyright 2007-2015 PrestaShop SA
-* @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
-* International Registered Trademark & Property of PrestaShop SA
-*}
+{**
+ * 2007-2016 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ * @author    PrestaShop SA <contact@prestashop.com>
+ * @copyright 2007-2016 PrestaShop SA
+ * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * International Registered Trademark & Property of PrestaShop SA
+ *}
 <tr id="new_product" style="display:none">
 	<td style="display:none;" colspan="2">
 		<input type="hidden" id="add_product_product_id" name="add_product[product_id]" value="0" />
@@ -35,7 +35,7 @@
 				</div>
 			</div>
 		</div>
-		
+
 		<div id="add_product_product_attribute_area" class="form-group" style="display: none;">
 			<label>{l s='Combinations'}</label>
 			<select name="add_product[product_attribute_id]" id="add_product_product_attribute_id"></select>
@@ -50,20 +50,17 @@
 	<td style="display:none;">
 		<div class="row">
 			<div class="input-group fixed-width-xl">
-				<div class="input-group-addon">
-					{$currency->sign}
-					{l s='tax excl.'}
-				</div>
+				{if $currency->format % 2}<div class="input-group-addon">{$currency->sign} {l s='tax excl.'}</div>{/if}
 				<input type="text" name="add_product[product_price_tax_excl]" id="add_product_product_price_tax_excl" value="" disabled="disabled" />
+				{if !($currency->format % 2)}<div class="input-group-addon">{$currency->sign} {l s='tax excl.'}</div>{/if}
 			</div>
 		</div>
+		<br/>
 		<div class="row">
 			<div class="input-group fixed-width-xl">
-				<div class="input-group-addon">
-					{$currency->sign}
-					{l s='tax incl.'}
-				</div>
+				{if $currency->format % 2}<div class="input-group-addon">{$currency->sign} {l s='tax incl.'}</div>{/if}
 				<input type="text" name="add_product[product_price_tax_incl]" id="add_product_product_price_tax_incl" value="" disabled="disabled" />
+				{if !($currency->format % 2)}<div class="input-group-addon">{$currency->sign} {l s='tax incl.'}</div>{/if}
 			</div>
 		</div>
 	</td>
@@ -93,11 +90,11 @@
 	<td style="display:none;">
 		<button type="button" class="btn btn-default" id="cancelAddProduct">
 			<i class="icon-remove text-danger"></i>
-			{l s='Cancel'}
+			{l s='Cancel' d='Admin.Actions'}
 		</button>
 		<button type="button" class="btn btn-default" id="submitAddProduct" disabled="disabled">
 			<i class="icon-ok text-success"></i>
-			{l s='Add'}
+			{l s='Add' d='Admin.Actions'}
 		</button>
 	</td>
 </tr>

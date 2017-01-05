@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -126,24 +126,27 @@ class HelperTreeShopsCore extends TreeCore
                     'Collapse All',
                     '#',
                     '$(\'#'.$this->getId().'\').tree(\'collapseAll\'); return false;',
-                    'icon-collapse-alt'),
+                    'icon-collapse-alt'
+                ),
                 new TreeToolbarLink(
                     'Expand All',
                     '#',
                     '$(\'#'.$this->getId().'\').tree(\'expandAll\'); return false;',
-                    'icon-expand-alt'),
+                    'icon-expand-alt'
+                ),
                 new TreeToolbarLink(
                     'Check All',
                     '#',
                     'checkAllAssociatedShops($(\'#'.$this->getId().'\')); return false;',
-                    'icon-check-sign'),
+                    'icon-check-sign'
+                ),
                 new TreeToolbarLink(
                     'Uncheck All',
                     '#',
                     'uncheckAllAssociatedShops($(\'#'.$this->getId().'\')); return false;',
-                    'icon-check-empty')
+                    'icon-check-empty'
                 )
-            );
+            ));
         }
 
         if ($use_selected_shop) {

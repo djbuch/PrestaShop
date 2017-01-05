@@ -27,7 +27,7 @@
 
 {block name=pageTitle}
 <h2 class="page-title">
-	{l s='Configure'}
+	{l s='Configure' d='Admin.Actions'}
 </h2>
 <h4 class="page-subtitle">{$module_display_name}</h4>
 {/block}
@@ -35,15 +35,13 @@
 <ul class="breadcrumb page-breadcrumb">
 	{if $breadcrumbs2.container.name != ''}
 		<li class="breadcrumb-current">
-			{if $breadcrumbs2.container.href != ''}<a href="{$breadcrumbs2.container.href|escape}">{/if}
 			{$breadcrumbs2.container.name|escape}
-			{if $breadcrumbs2.container.href != ''}</a>{/if}
 		</li>
 	{/if}
 	<li>{$module_name}</li>
 	<li>
 		<i class="icon-wrench"></i>
-		{l s='Configure'}
+		{l s='Configure' d='Admin.Actions'}
 	</li>
 </ul>
 {/block}
@@ -58,15 +56,15 @@
 	<div class="btn-toolbar">
 		<ul class="nav nav-pills pull-right">
 			<li>
-				<a id="desc-module-back" class="toolbar_btn" href="javascript: window.history.back();" title="{l s='Back'}">
+				<a id="desc-module-back" class="toolbar_btn" href="{url entity='sf' route='admin_module_manage'}">
 					<i class="process-icon-back"></i>
 					<div>{l s='Back'}</div>
 				</a>
 			</li>
 			<!-- <li>
-				<a id="desc-module-disable" class="toolbar_btn" href="{$module_disable_link}" title="{l s='Disable'}">
+				<a id="desc-module-disable" class="toolbar_btn" href="{$module_disable_link}" title="{l s='Disable' d='Admin.Actions'}">
 					<i class="process-icon-off"></i>
-					<div>{l s='Disable'}</div>
+					<div>{l s='Disable' d='Admin.Actions'}</div>
 				</a>
 			</li>
 			<li>

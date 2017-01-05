@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,17 +19,18 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
+
+umask(0000); // This will let the permissions be 0777
 
 if (!defined('_PS_ADMIN_DIR_')) {
     define('_PS_ADMIN_DIR_', getcwd());
 }
 
 require(_PS_ADMIN_DIR_.'/../config/config.inc.php');
-require(_PS_ADMIN_DIR_.'/functions.php');
 
 // For retrocompatibility with "tab" parameter
 if (!isset($_GET['controller']) && isset($_GET['tab'])) {
@@ -43,5 +44,10 @@ if (!isset($_REQUEST['controller']) && isset($_REQUEST['tab'])) {
 }
 // Retrocompatibility with 1.4
 $_REQUEST['ajaxMode'] = $_POST['ajaxMode'] = $_GET['ajaxMode'] = $_REQUEST['ajax'] = $_POST['ajax'] = $_GET['ajax'] = 1;
+
+require_once __DIR__.'/../app/AppKernel.php';
+$kernel = new AppKernel(_PS_MODE_DEV_?'dev':'prod', _PS_MODE_DEV_);
+$kernel->loadClassCache();
+$kernel->boot();
 
 Dispatcher::getInstance()->dispatch();

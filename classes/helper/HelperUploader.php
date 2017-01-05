@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -187,8 +187,9 @@ class HelperUploaderCore extends Uploader
             $controller_name = strtolower($matches[0][1]);
         }
 
-        if ($this->getContext()->controller instanceof ModuleAdminController && file_exists($this->_normalizeDirectory(
-                $this->getContext()->controller->getTemplatePath()).$this->getTemplateDirectory().$template)) {
+        if ($this->getContext()->controller instanceof ModuleAdminController
+            && file_exists($this->_normalizeDirectory($this->getContext()->controller->getTemplatePath()).$this->getTemplateDirectory().$template)
+        ) {
             return $this->_normalizeDirectory($this->getContext()->controller->getTemplatePath())
                 .$this->getTemplateDirectory().$template;
         } elseif ($this->getContext()->controller instanceof AdminController && isset($controller_name)
@@ -270,7 +271,8 @@ class HelperUploaderCore extends Uploader
         }
 
         $template = $this->getContext()->smarty->createTemplate(
-            $this->getTemplateFile($this->getTemplate()), $this->getContext()->smarty
+            $this->getTemplateFile($this->getTemplate()),
+            $this->getContext()->smarty
         );
 
         $template->assign(array(

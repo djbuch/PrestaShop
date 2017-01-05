@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -246,11 +246,6 @@ class QqUploadedFileXhr
         } elseif ($method == 'auto') {
             $imagesTypes = ImageType::getImagesTypes('products');
             foreach ($imagesTypes as $imageType) {
-                /*
-                    $theme = (Shop::isFeatureActive() ? '-'.$imageType['id_theme'] : '');
-                    if (!ImageManager::resize($tmpName, $new_path.'-'.stripslashes($imageType['name']).$theme.'.'.$image->image_format, $imageType['width'], $imageType['height'], $image->image_format))
-                        return array('error' => Tools::displayError('An error occurred while copying image:').' '.stripslashes($imageType['name']));
-                */
                 if (!ImageManager::resize($tmpName, $new_path.'-'.stripslashes($imageType['name']).'.'.$image->image_format, $imageType['width'], $imageType['height'], $image->image_format)) {
                     return array('error' => Tools::displayError('An error occurred while copying image:').' '.stripslashes($imageType['name']));
                 }

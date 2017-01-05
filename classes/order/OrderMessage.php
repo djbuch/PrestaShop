@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -52,7 +52,7 @@ class OrderMessageCore extends ObjectModel
     );
 
     protected $webserviceParameters = array(
-            'fields' => array(
+        'fields' => array(
             'id' => array('sqlId' => 'id_discount_type', 'xlink_resource' => 'order_message_lang'),
             'date_add' => array('sqlId' => 'date_add')
         )
@@ -61,10 +61,10 @@ class OrderMessageCore extends ObjectModel
     public static function getOrderMessages($id_lang)
     {
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
-		SELECT om.id_order_message, oml.name, oml.message
-		FROM '._DB_PREFIX_.'order_message om
-		LEFT JOIN '._DB_PREFIX_.'order_message_lang oml ON (oml.id_order_message = om.id_order_message)
-		WHERE oml.id_lang = '.(int)$id_lang.'
-		ORDER BY name ASC');
+        SELECT om.id_order_message, oml.name, oml.message
+        FROM '._DB_PREFIX_.'order_message om
+        LEFT JOIN '._DB_PREFIX_.'order_message_lang oml ON (oml.id_order_message = om.id_order_message)
+        WHERE oml.id_lang = '.(int)$id_lang.'
+        ORDER BY name ASC');
     }
 }

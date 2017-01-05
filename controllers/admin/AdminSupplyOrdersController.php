@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2016 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -38,7 +38,6 @@ class AdminSupplyOrdersControllerCore extends AdminController
     public function __construct()
     {
         $this->bootstrap = true;
-        $this->context = Context::getContext();
         $this->table = 'supply_order';
 
         $this->className = 'SupplyOrder';
@@ -46,6 +45,8 @@ class AdminSupplyOrdersControllerCore extends AdminController
         $this->lang = false;
         $this->is_template_list = false;
         $this->multishop_context = Shop::CONTEXT_ALL;
+
+        parent::__construct();
 
         $this->addRowAction('updatereceipt');
         $this->addRowAction('changestate');
@@ -56,7 +57,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
 
         $this->fields_list = array(
             'reference' => array(
-                'title' => $this->l('Reference'),
+                'title' => $this->trans('Reference', array(), 'Admin.Global'),
                 'havingFilter' => true
             ),
             'supplier' => array(
@@ -94,7 +95,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                 'filter_key' => 'a!date_delivery_expected'
             ),
             'id_export' => array(
-                'title' => $this->l('Export'),
+                'title' => $this->trans('Export', array(), 'Admin.Actions'),
                 'callback' => 'printExportIcons',
                 'orderby' => false,
                 'search' => false
@@ -105,8 +106,6 @@ class AdminSupplyOrdersControllerCore extends AdminController
         $this->warehouses = Warehouse::getWarehouses(true);
         // gets the final list of warehouses
         array_unshift($this->warehouses, array('id_warehouse' => -1, 'name' => $this->l('All Warehouses')));
-
-        parent::__construct();
     }
 
     /**
@@ -136,7 +135,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
             $this->display = 'add';
 
             if (Tools::isSubmit('updatesupply_order')) {
-                if ($this->tabAccess['edit'] === '1') {
+                if ($this->access('edit')) {
                     $this->display = 'edit';
                 } else {
                     $this->errors[] = Tools::displayError('You do not have permission to edit this.');
@@ -228,7 +227,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                 'input' => array(
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Reference'),
+                        'label' => $this->trans('Reference', array(), 'Admin.Global'),
                         'name' => 'reference',
                         'required' => true,
                         'hint' => $this->l('The reference number for your order.'),
@@ -403,7 +402,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
             );
 
             unset($this->toolbar_btn['new']);
-            if ($this->tabAccess['add'] === '1') {
+            if ($this->access('add')) {
                 $this->toolbar_btn['new'] = array(
                     'href' => self::$currentIndex.'&add'.$this->table.'&token='.$this->token,
                     'desc' => $this->l('Add New')
@@ -636,7 +635,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
             ),
             'input' => array(),
             'submit' => array(
-                'title' => $this->l('Save')
+                'title' => $this->trans('Save', array(), 'Admin.Actions')
             )
         );
 
@@ -668,10 +667,6 @@ class AdminSupplyOrdersControllerCore extends AdminController
 
         $this->context->smarty->assign(array(
             'content' => $content,
-            'url_post' => self::$currentIndex.'&token='.$this->token,
-            'show_page_header_toolbar' => $this->show_page_header_toolbar,
-            'page_header_toolbar_title' => $this->page_header_toolbar_title,
-            'page_header_toolbar_btn' => $this->page_header_toolbar_btn
         ));
     }
 
@@ -766,7 +761,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                 'search' => false,
             ),
             'reference' => array(
-                'title' => $this->l('Reference'),
+                'title' => $this->trans('Reference', array(), 'Admin.Global'),
                 'orderby' => false,
                 'filter' => false,
                 'search' => false,
@@ -784,7 +779,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                 'search' => false,
             ),
             'name' => array(
-                'title' => $this->l('Name'),
+                'title' => $this->trans('Name', array(), 'Admin.Global'),
                 'orderby' => false,
                 'filter' => false,
                 'search' => false,
@@ -1017,6 +1012,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                         $entry->reference = Tools::getValue('input_reference_'.$id, '');
                         $entry->supplier_reference = Tools::getValue('input_supplier_reference_'.$id, '');
                         $entry->ean13 = Tools::getValue('input_ean13_'.$id, '');
+                        $entry->isbn = Tools::getValue('input_isbn_'.$id, '');
                         $entry->upc = Tools::getValue('input_upc_'.$id, '');
 
                         //get the product name in the order language
@@ -1054,6 +1050,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                                 'reference' => $entry->reference,
                                 'supplier_reference' => $entry->supplier_reference,
                                 'ean13' => $entry->ean13,
+                                'isbn' => $entry->isbn,
                                 'upc' => $entry->upc,
                             );
 
@@ -1083,10 +1080,10 @@ class AdminSupplyOrdersControllerCore extends AdminController
         $this->is_editing_order = false;
 
         // Checks access
-        if (Tools::isSubmit('submitAddsupply_order') && !($this->tabAccess['add'] === '1')) {
+        if (Tools::isSubmit('submitAddsupply_order') && !($this->access('add'))) {
             $this->errors[] = Tools::displayError('You do not have permission to add a supply order.');
         }
-        if (Tools::isSubmit('submitBulkUpdatesupply_order_detail') && !($this->tabAccess['edit'] === '1')) {
+        if (Tools::isSubmit('submitBulkUpdatesupply_order_detail') && !($this->access('edit'))) {
             $this->errors[] = Tools::displayError('You do not have permission to edit an order.');
         }
 
@@ -1182,7 +1179,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
         if (Tools::isSubmit('submitChangestate')
             && Tools::isSubmit('id_supply_order')
             && Tools::isSubmit('id_supply_order_state')) {
-            if ($this->tabAccess['edit'] != '1') {
+            if ($this->access('edit') != '1') {
                 $this->errors[] = Tools::displayError('You do not have permission to change the order status.');
             }
 
@@ -1721,7 +1718,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
             }
         }
         if ($items) {
-            die(Tools::jsonEncode($items));
+            die(json_encode($items));
         }
 
         die(1);
@@ -1788,7 +1785,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                     'search' => false,
                 ),
                 'reference' => array(
-                    'title' => $this->l('Reference'),
+                    'title' => $this->trans('Reference', array(), 'Admin.Global'),
                     'align' => 'center',
                     'orderby' => false,
                     'filter' => false,
@@ -1809,7 +1806,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                     'search' => false,
                 ),
                 'name' => array(
-                    'title' => $this->l('Name'),
+                    'title' => $this->trans('Name', array(), 'Admin.Global'),
                     'orderby' => false,
                     'filter' => false,
                     'search' => false,
@@ -1983,7 +1980,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
             case 'update_order_state':
                 $this->toolbar_btn['save'] = array(
                     'href' => '#',
-                    'desc' => $this->l('Save')
+                    'desc' => $this->trans('Save', array(), 'Admin.Actions')
                 );
 
             case 'update_receipt':
@@ -1996,7 +1993,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
 
                     $this->toolbar_btn['cancel'] = array(
                         'href' => $back,
-                        'desc' => $this->l('Cancel')
+                        'desc' => $this->trans('Cancel', array(), 'Admin.Actions')
                     );
                 }
             break;
@@ -2105,6 +2102,7 @@ class AdminSupplyOrdersControllerCore extends AdminController
                 $supply_order_detail->supplier_reference = $item['supplier_reference'];
                 $supply_order_detail->name = Product::getProductName($item['id_product'], $item['id_product_attribute'], $supply_order->id_lang);
                 $supply_order_detail->ean13 = $item['ean13'];
+                $supply_order_detail->isbn = $item['isbn'];
                 $supply_order_detail->upc = $item['upc'];
                 $supply_order_detail->quantity_expected = ((int)$diff == 0) ? 1 : (int)$diff;
                 $supply_order_detail->exchange_rate = $order_currency->conversion_rate;
