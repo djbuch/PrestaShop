@@ -1,5 +1,5 @@
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -40,10 +40,6 @@ export default function () {
         let pageLink;
         let pageLinkAnchor;
         let totalPages = $(nav).parents('.translation-domains').find('.page').length;
-
-        if (totalPages > 10) {
-          $(nav).parent().addClass('relative-position');
-        }
 
         if (totalPages === 1) {
           return $('.pagination').addClass('hide');

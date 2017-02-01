@@ -1,5 +1,5 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
@@ -85,11 +85,11 @@
   <div class="modal-footer">
     <div class="input-group pull-right">
       <button type="button" class="btn btn-primary" tabindex="-1" id="import_continue_button" style="display: none;">
-        {l s="Ignore warnings and continue?" d="Admin.AdvParameters.Notification"}
+        {l s="Ignore warnings and continue?" d="Admin.Advparameters.Notification"}
       </button>
       &nbsp;
       <button type="button" class="btn btn-default" tabindex="-1" id="import_stop_button">
-        {l s="Abort import" d="Admin.AdvParameters.Feature"}
+        {l s="Abort import" d="Admin.Advparameters.Feature"}
       </button>
       &nbsp;
       <button type="button" class="btn btn-success" data-dismiss="modal" tabindex="-1" id="import_close_button" style="display: none;">

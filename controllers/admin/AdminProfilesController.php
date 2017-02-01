@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -64,7 +64,7 @@ class AdminProfilesControllerCore extends AdminController
 
         $this->fields_form = array(
             'legend' => array(
-                'title' => $this->trans('Profile', array(), 'Admin.AdvParameters.Feature'),
+                'title' => $this->trans('Profile', array(), 'Admin.Advparameters.Feature'),
                 'icon' => 'icon-group'
             ),
             'input' => array(
@@ -97,7 +97,7 @@ class AdminProfilesControllerCore extends AdminController
         /* PrestaShop demo mode*/
 
         if (isset($_GET['delete'.$this->table]) && $_GET[$this->identifier] == (int)(_PS_ADMIN_PROFILE_)) {
-            $this->errors[] = $this->trans('For security reasons, you cannot delete the Administrator\'s profile.', array(), 'Admin.AdvParameters.Notification');
+            $this->errors[] = $this->trans('For security reasons, you cannot delete the Administrator\'s profile.', array(), 'Admin.Advparameters.Notification');
         } else {
             parent::postProcess();
         }
@@ -108,7 +108,7 @@ class AdminProfilesControllerCore extends AdminController
         if (empty($this->display)) {
             $this->page_header_toolbar_btn['new_profile'] = array(
                 'href' => self::$currentIndex.'&addprofile&token='.$this->token,
-                'desc' => $this->trans('Add new profile', array(), 'Admin.AdvParameters.Feature'),
+                'desc' => $this->trans('Add new profile', array(), 'Admin.Advparameters.Feature'),
                 'icon' => 'process-icon-new'
             );
         }

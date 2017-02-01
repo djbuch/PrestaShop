@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -277,7 +277,7 @@ class AdminProductDataUpdater implements ProductInterface
             SET cp.`position` = ELT(cp.`position`, '.$fields.'),
                 p.`date_upd` = "'.date('Y-m-d H:i:s').'",
                 product_shop.`date_upd` = "'.date('Y-m-d H:i:s').'"
-            WHERE cp.`id_category` = '.$categoryId.' AND cp.`id_product` IN ('.implode(',', array_keys($productList)).')';
+            WHERE cp.`id_category` = '.(int)$categoryId.' AND cp.`id_product` IN ('.implode(',', array_map('intval', array_keys($productList))).')';
 
         \Db::getInstance()->query($updatePositions);
 
@@ -285,8 +285,8 @@ class AdminProductDataUpdater implements ProductInterface
         \Db::getInstance()->query('SET @i := 0');
         $selectPositions = 'UPDATE`'._DB_PREFIX_.'category_product` cp
             SET cp.`position` = (SELECT @i := @i + 1)
-            WHERE cp.`id_category` = '.$categoryId.'
-            ORDER BY cp.`id_product` NOT IN ('.implode(',', array_keys($productList)).'), cp.`position` ASC';
+            WHERE cp.`id_category` = '.(int)$categoryId.'
+            ORDER BY cp.`id_product` NOT IN ('.implode(',', array_map('intval', array_keys($productList))).'), cp.`position` ASC';
         \Db::getInstance()->query($selectPositions);
 
         return true;

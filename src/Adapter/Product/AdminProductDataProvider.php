@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -29,6 +29,7 @@ namespace PrestaShop\PrestaShop\Adapter\Product;
 use Doctrine\ORM\EntityManager;
 use PrestaShop\PrestaShop\Adapter\Admin\AbstractAdminQueryBuilder;
 use PrestaShop\PrestaShop\Adapter\ImageManager;
+use PrestaShop\PrestaShop\Adapter\Validate;
 use PrestaShopBundle\Entity\AdminFilter;
 use PrestaShopBundle\Service\DataProvider\Admin\ProductInterface;
 
@@ -163,6 +164,11 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
      */
     public function getCatalogProductList($offset, $limit, $orderBy, $sortOrder, $post = array(), $avoidPersistence = false, $formatCldr = true)
     {
+        $offset = (int)$offset;
+        $limit = (int)$limit;
+        $orderBy = Validate::isOrderBy($orderBy) ? $orderBy : 'id_product';
+        $sortOrder = Validate::isOrderWay($sortOrder) ? $sortOrder : 'desc';
+
         $filterParams = $this->combinePersistentCatalogProductFilter(array_merge(
             $post,
             ['last_offset' => $offset, 'last_limit' => $limit, 'last_orderBy' => $orderBy, 'last_sortOrder' => $sortOrder]
@@ -211,7 +217,8 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
             'sav' => array(
                 'table' => 'stock_available',
                 'join' => 'LEFT JOIN',
-                'on' => 'sav.`id_product` = p.`id_product` AND sav.`id_product_attribute` = 0 AND sav.id_shop = '.$idShop,
+                'on' => 'sav.`id_product` = p.`id_product` AND sav.`id_product_attribute` = 0'.
+                \StockAvailable::addSqlShopRestriction(null, $idShop, 'sav'),
             ),
             'sa' => array(
                 'table' => 'product_shop',
@@ -347,24 +354,15 @@ class AdminProductDataProvider extends AbstractAdminQueryBuilder implements Prod
     public function countAllProducts()
     {
         $idShop = \ContextCore::getContext()->shop->id;
-        $sqlSelect = array(
-            'id_product' => array('table' => 'p', 'field' => 'id_product'),
-        );
-        $sqlTable = array(
-            'p' => 'product',
-            'sa' => array(
-                'table' => 'product_shop',
-                'join' => 'JOIN',
-                'on' => 'p.`id_product` = sa.`id_product` AND sa.id_shop = '.$idShop,
-            ),
-        );
 
-        $sql = $this->compileSqlQuery($sqlSelect, $sqlTable);
-        \Db::getInstance()->executeS($sql, true, false);
-        $total = \Db::getInstance()->executeS('SELECT FOUND_ROWS();', true, false);
-        $total = $total[0]['FOUND_ROWS()'];
+        $query = new \DbQuery();
+        $query->select('COUNT(ps.id_product)');
+        $query->from('product_shop', 'ps');
+        $query->where('ps.id_shop = '.(int)$idShop);
 
-        return $total;
+        $total = \Db::getInstance()->getValue($query);
+
+        return (int) $total;
     }
 
     /**

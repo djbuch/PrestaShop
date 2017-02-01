@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -316,7 +316,12 @@ class FrontControllerCore extends Controller
 
         /* Theme is missing */
         if (!is_dir(_PS_THEME_DIR_)) {
-            throw new PrestaShopException((sprintf(Tools::displayError('Current theme unavailable "%s". Please check your theme directory name and permissions.'), basename(rtrim(_PS_THEME_DIR_, '/\\')))));
+            throw new PrestaShopException(
+                $this->trans(
+                    'Current theme is unavailable. Please check your theme\'s directory name ("%s") and permissions.',
+                    array(basename(rtrim(_PS_THEME_DIR_, '/\\'))),
+                    'Admin.Design.Notification'
+                ));
         }
 
         if (Configuration::get('PS_GEOLOCATION_ENABLED')) {
@@ -689,13 +694,15 @@ class FrontControllerCore extends Controller
                 header('HTTP/1.1 503 Service Unavailable');
                 header('Retry-After: 3600');
 
+                $this->registerStylesheet('theme-error', '/assets/css/error.css', ['media' => 'all', 'priority' => 50]);
                 $this->context->smarty->assign(array(
                     'shop' => $this->getTemplateVarShop(),
                     'HOOK_MAINTENANCE' => Hook::exec('displayMaintenance', array()),
                     'maintenance_text' => Configuration::get('PS_MAINTENANCE_TEXT', (int) $this->context->language->id),
+                    'stylesheets' => $this->getStylesheets(),
                 ));
-
                 $this->smartyOutputContent('errors/maintenance.tpl');
+
                 exit;
             }
         }
@@ -707,10 +714,14 @@ class FrontControllerCore extends Controller
     protected function displayRestrictedCountryPage()
     {
         header('HTTP/1.1 403 Forbidden');
+
+        $this->registerStylesheet('theme-error', '/assets/css/error.css', ['media' => 'all', 'priority' => 50]);
         $this->context->smarty->assign(array(
             'shop' => $this->getTemplateVarShop(),
+            'stylesheets' => $this->getStylesheets(),
         ));
         $this->smartyOutputContent('errors/restricted-country.tpl');
+
         exit;
     }
 
@@ -804,7 +815,7 @@ class FrontControllerCore extends Controller
                         $record = null;
                     }
 
-                    if (is_object($record)) {
+                    if (is_object($record) && Validate::isLanguageIsoCode($record->country->isoCode) && (int)Country::getByIso(strtoupper($record->country->isoCode)) != 0) {
                         if (!in_array(strtoupper($record->country->isoCode), explode(';', Configuration::get('PS_ALLOWED_COUNTRIES'))) && !FrontController::isInWhitelistForGeolocation()) {
                             if (Configuration::get('PS_GEOLOCATION_BEHAVIOR') == _PS_GEOLOCATION_NO_CATALOG_) {
                                 $this->restrictedCountry = Country::GEOLOC_FORBIDDEN;
@@ -1243,7 +1254,7 @@ class FrontControllerCore extends Controller
     public function setTemplate($template, $params = array(), $locale = null)
     {
         parent::setTemplate(
-            $this->getTemplateFile($template, $params, $locale = null)
+            $this->getTemplateFile($template, $params, $locale)
         );
     }
 
@@ -1565,7 +1576,7 @@ class FrontControllerCore extends Controller
                 'address2' => $address->address2,
                 'postcode' => $address->postcode,
                 'city' => $address->city,
-                'state' => (new State($address->id_state))->name[$this->context->language->id],
+                'state' => (new State($address->id_state))->name,
                 'country' => (new Country($address->id_country))->name[$this->context->language->id],
             ),
             'phone' => Configuration::get('PS_SHOP_PHONE'),
@@ -1656,7 +1667,7 @@ class FrontControllerCore extends Controller
     protected function addMyAccountToBreadcrumb()
     {
         return array(
-            'title' => $this->getTranslator()->trans('Your account', array(), 'Shop.Theme.CustomerAccount'),
+            'title' => $this->getTranslator()->trans('Your account', array(), 'Shop.Theme.Customeraccount'),
             'url' => $this->context->link->getPageLink('my-account', true),
         );
     }

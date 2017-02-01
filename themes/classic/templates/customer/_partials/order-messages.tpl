@@ -1,5 +1,5 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,13 +18,13 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
 {if $order.messages}
 <div class="box messages">
-  <h3>{l s='Messages' d='Shop.Theme.CustomerAccount'}</h3>
+  <h3>{l s='Messages' d='Shop.Theme.Customeraccount'}</h3>
   {foreach from=$order.messages item=message}
     <div class="message row">
       <div class="col-sm-4">
@@ -43,8 +43,8 @@
   <form action="{$urls.pages.order_detail}" method="post">
 
     <header>
-      <h3>{l s='Add a message' d='Shop.Theme.CustomerAccount'}</h3>
-      <p>{l s='If you would like to add a comment about your order, please write it in the field below.' d='Shop.Theme.CustomerAccount'}</p>
+      <h3>{l s='Add a message' d='Shop.Theme.Customeraccount'}</h3>
+      <p>{l s='If you would like to add a comment about your order, please write it in the field below.' d='Shop.Theme.Customeraccount'}</p>
     </header>
 
     <section class="form-fields">

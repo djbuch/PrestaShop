@@ -1,5 +1,5 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
@@ -219,9 +219,7 @@
 					<li id="employee_infos" class="dropdown">
 						<a href="{$link->getAdminLink('AdminEmployees')|escape:'html':'UTF-8'}&amp;id_employee={$employee->id|intval}&amp;updateemployee" class="employee_name dropdown-toggle" data-toggle="dropdown">
 							<span class="employee_avatar_small">
-								{if isset($employee)}
-									<img class="imgm img-thumbnail" alt="" src="{$employee->getImage()}" width="32" height="32" />
-								{/if}
+                <img class="imgm img-thumbnail" alt="" src="{$employee->getImage()}" width="32" height="32" />
 							</span>
 						</a>
 						<ul id="employee_links" class="dropdown-menu">

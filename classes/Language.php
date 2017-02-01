@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,11 +19,12 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 use PrestaShop\PrestaShop\Core\Addon\Theme\ThemeManagerBuilder;
+use PrestaShop\PrestaShop\Core\Cldr\Repository as cldrRepository;
 
 class LanguageCore extends ObjectModel
 {
@@ -376,9 +377,7 @@ class LanguageCore extends ObjectModel
 
         foreach ($tables as $table) {
             foreach ($table as $t) {
-                if ($t != _DB_PREFIX_.'configuration_lang') {
-                    $langTables[] = $t;
-                }
+                $langTables[] = $t;
             }
         }
 
@@ -431,7 +430,11 @@ class LanguageCore extends ObjectModel
                     }
                 }
                 $sql = rtrim($sql, ', ');
-                $sql .= ' FROM `'._DB_PREFIX_.'lang` CROSS JOIN `'.bqSQL(str_replace('_lang', '', $name)).'`)';
+                $sql .= ' FROM `'._DB_PREFIX_.'lang` CROSS JOIN `'.bqSQL(str_replace('_lang', '', $name)).'` ';
+
+                // prevent insert with where initial data exists
+                $sql .= ' WHERE `'.bqSQL($identifier).'` IN (SELECT `'.bqSQL($identifier).'` FROM `'.bqSQL($name).'`) )';
+
                 $return &= Db::getInstance()->execute($sql);
             }
         }
@@ -652,7 +655,7 @@ class LanguageCore extends ObjectModel
     public static function getIdByIso($iso_code, $no_cache = false)
     {
         if (!Validate::isLanguageIsoCode($iso_code)) {
-            die(Tools::displayError('Fatal error: ISO code is not correct').' '.Tools::safeOutput($iso_code));
+            die(Context::getContext()->getTranslator()->trans('Fatal error: ISO code is not correct', array(), 'Admin.International.Notification').' '.Tools::safeOutput($iso_code));
         }
 
         $key = 'Language::getIdByIso_'.$iso_code;
@@ -705,7 +708,7 @@ class LanguageCore extends ObjectModel
     public static function getLanguageCodeByIso($iso_code)
     {
         if (!Validate::isLanguageIsoCode($iso_code)) {
-            die(Tools::displayError('Fatal error: ISO code is not correct').' '.Tools::safeOutput($iso_code));
+            die(Context::getContext()->getTranslator()->trans('Fatal error: ISO code is not correct', array(), 'Admin.International.Notification').' '.Tools::safeOutput($iso_code));
         }
 
         return Db::getInstance()->getValue('SELECT `language_code` FROM `'._DB_PREFIX_.'lang` WHERE `iso_code` = \''.pSQL(strtolower($iso_code)).'\'');
@@ -714,7 +717,7 @@ class LanguageCore extends ObjectModel
     public static function getLanguageByIETFCode($code)
     {
         if (!Validate::isLanguageCode($code)) {
-            die(sprintf(Tools::displayError('Fatal error: IETF code %s is not correct'), Tools::safeOutput($code)));
+            die(Context::getContext()->getTranslator()->trans('Fatal error: IETF code %s is not correct', array(Tools::safeOutput($code)), 'Admin.International.Notification'));
         }
 
         // $code is in the form of 'xx-YY' where xx is the language code
@@ -947,6 +950,8 @@ class LanguageCore extends ObjectModel
             self::installEmailsLanguagePack($lang_pack, $errors);
         }
 
+        Language::updateMultilangTable($iso);
+
         return count($errors) ? $errors : true;
     }
 
@@ -956,7 +961,7 @@ class LanguageCore extends ObjectModel
 
         $lang_pack = self::getLangDetails($iso);
         if (!$lang_pack) {
-            $errors[] = Tools::displayError('Sorry this language is not available');
+            $errors[] = Context::getContext()->getTranslator()->trans('Sorry this language is not available', array(), 'Admin.International.Notification');
         }
 
         self::downloadXLFLanguagePack($lang_pack['locale'], $errors, 'sf');
@@ -985,7 +990,7 @@ class LanguageCore extends ObjectModel
 
         if (!is_writable(dirname($file))) {
             // @todo Throw exception
-            $errors[] = Tools::displayError('Server does not have permissions for writing.').' ('.$file.')';
+            $errors[] = Context::getContext()->getTranslator()->trans('Server does not have permissions for writing.', array(), 'Admin.International.Notification').' ('.$file.')';
         } else {
             @file_put_contents($file, $content);
         }
@@ -995,7 +1000,7 @@ class LanguageCore extends ObjectModel
     {
         if (!file_exists(_PS_TRANSLATIONS_DIR_.'sf-'.$locale.'.zip')) {
             // @todo Throw exception
-            $errors[] = Tools::displayError('Language pack unavailable.');
+            $errors[] = Context::getContext()->getTranslator()->trans('Language pack unavailable.', array(), 'Admin.International.Notification');
         } else {
             $zipArchive = new ZipArchive();
             $zipArchive->open(_PS_TRANSLATIONS_DIR_.'sf-'.$locale.'.zip');
@@ -1011,7 +1016,7 @@ class LanguageCore extends ObjectModel
 
         if (!file_exists($folder.'.zip')) {
             // @todo Throw exception
-            $errors[] = Tools::displayError('Language pack unavailable.');
+            $errors[] = Context::getContext()->getTranslator()->trans('Language pack unavailable.', array(), 'Admin.International.Notification');
         } else {
             $zipArchive = new ZipArchive();
             $zipArchive->open($folder.'.zip');
@@ -1056,7 +1061,7 @@ class LanguageCore extends ObjectModel
         Tools::clearCache();
 
         if (!Language::checkAndAddLanguage((string) $iso, false, false, $params)) {
-            $errors[] = sprintf(Tools::displayError('An error occurred while creating the language: %s'), (string) $iso);
+            $errors[] = Context::getContext()->getTranslator()->trans('An error occurred while creating the language: %s', array((string)$iso), 'Admin.International.Notification');
         } else {
             // Reset cache
             Language::loadLanguages();
@@ -1130,6 +1135,127 @@ class LanguageCore extends ObjectModel
                 }
             }
             $gz->extractList($files_listing, _PS_TRANSLATIONS_DIR_.'../', '');
+        }
+    }
+
+    /**
+     * Update all table_lang from xlf & DataLang
+     *
+     * @param $iso_code
+     *
+     * @return bool
+     */
+    public static function updateMultilangTable($iso_code)
+    {
+        $useLang = Db::getInstance()->getRow('SELECT * FROM `' . _DB_PREFIX_ . 'lang` WHERE `iso_code` = "'.pSQL($iso_code).'" ', true, false);
+
+        if (!empty($useLang)) {
+            $lang = new Language($useLang['id_lang']);
+
+            $tables = Db::getInstance()->executeS('SHOW TABLES LIKE \'' . str_replace('_', '\\_', _DB_PREFIX_) . '%\_lang\' ');
+            foreach ($tables as $table) {
+                foreach ($table as $t) {
+                    $className = ucfirst(Tools::toCamelCase(str_replace(_DB_PREFIX_, '', $t)));
+
+                    if (_DB_PREFIX_.'country_lang' == $t) {
+                        self::updateMultilangFromCldr($lang);
+                    } else {
+                        self::updateMultilangFromClass($t, $className, $lang);
+                    }
+                }
+            }
+
+            Hook::exec('actionUpdateLangAfter', array('lang' => $lang));
+        }
+
+        return true;
+    }
+
+    public static function updateMultilangFromCldr($lang)
+    {
+        $cldrRepository = new cldrRepository($lang->locale);
+        $cldrLocale = $cldrRepository->getCulture();
+        $cldrFile = _PS_TRANSLATIONS_DIR_.'cldr/datas/main/'.$cldrLocale.'/territories.json';
+
+        if (file_exists($cldrFile)) {
+            $cldrContent = json_decode(file_get_contents($cldrFile), true);
+
+            if (!empty($cldrContent)) {
+
+                $translatableCountries = Db::getInstance()->executeS('SELECT c.`iso_code`, cl.* FROM `' . _DB_PREFIX_ . 'country` c
+                    INNER JOIN `' . _DB_PREFIX_ . 'country_lang` cl ON c.`id_country` = cl.`id_country`
+                    WHERE cl.`id_lang` = "' . (int)$lang->id . '" ', true, false);
+
+                if (!empty($translatableCountries)) {
+                    $cldrLanguages = $cldrContent['main'][$cldrLocale]['localeDisplayNames']['territories'];
+
+                    foreach ($translatableCountries as $country) {
+                        if (isset($cldrLanguages[$country['iso_code']]) &&
+                            !empty($cldrLanguages[$country['iso_code']])
+                        ) {
+                            $sql = 'UPDATE `' . _DB_PREFIX_ . 'country_lang`
+                                SET `name` = "' . pSQL(ucwords($cldrLanguages[$country['iso_code']])) . '"
+                                WHERE `id_country` = "' . (int)$country['id_country'] . '" AND `id_lang` = "' . (int)$lang->id . '" LIMIT 1;';
+                            Db::getInstance()->execute($sql);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static function updateMultilangFromClass($table, $className, $lang)
+    {
+        if (!class_exists($className)) {
+            return;
+        }
+
+        $translator = Context::getContext()->getTranslator();
+
+        $classObject = new $className($lang->locale);
+
+        $keys = $classObject->getKeys();
+        $fieldsToUpdate = $classObject->getFieldsToUpdate();
+
+        if (!empty($keys) && !empty($fieldsToUpdate)) {
+
+            // get table data
+            $tableData = Db::getInstance()->executeS('SELECT * FROM `' . bqSQL($table) . '`
+                WHERE `id_lang` = "' . (int)$lang->id . '"', true, false);
+
+            if (!empty($tableData)) {
+                foreach ($tableData as $data) {
+                    $updateWhere = '';
+                    $updateField = '';
+
+                    // Construct update where
+                    foreach ($keys as $key) {
+                        if (!empty($updateWhere)) {
+                            $updateWhere .= ' AND ';
+                        }
+                        $updateWhere .= '`'.bqSQL($key).'` = "' . pSQL($data[$key]) . '"';
+                    }
+
+                    // Construct update field
+                    foreach ($fieldsToUpdate as $toUpdate) {
+                        $untranslated = $translator->getSourceString($data[$toUpdate], $classObject->getDomain());
+                        $translatedField = $classObject->getFieldValue($toUpdate, $untranslated);
+
+                        if (!empty($translatedField) && $translatedField != $data[$toUpdate]) {
+                            if (!empty($updateField)) {
+                                $updateField .= ' , ';
+                            }
+                            $updateField .= '`'.bqSQL($toUpdate).'` = "' . pSQL($translatedField) . '"';
+                        }
+                    }
+
+                    // Update table
+                    if (!empty($updateWhere) && !empty($updateField)) {
+                        $sql = 'UPDATE `' . bqSQL($table) . '` SET ' . $updateField . ' WHERE ' . $updateWhere . ' AND `id_lang` = "' . (int)$lang->id . '" LIMIT 1;';
+                        Db::getInstance()->execute($sql);
+                    }
+                }
+            }
         }
     }
 }

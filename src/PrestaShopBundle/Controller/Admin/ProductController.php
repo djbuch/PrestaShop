@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -79,7 +79,7 @@ class ProductController extends FrameworkBundleAdminController
      * @param string $sortOrder To order product list
      * @return array Template vars
      */
-    public function catalogAction(Request $request, $limit = 10, $offset = 0, $orderBy = 'id_product', $sortOrder = 'asc')
+    public function catalogAction(Request $request, $limit = 10, $offset = 0, $orderBy = 'id_product', $sortOrder = 'desc')
     {
         $context = $this->get('prestashop.adapter.legacy.context')->getContext();
         $request->getSession()->set('_locale', $context->language->locale);
@@ -509,12 +509,15 @@ class ProductController extends FrameworkBundleAdminController
                     // else quantities are managed from $adminProductWrapper->processProductAttribute() above.
 
                     $adminProductWrapper->processProductOutOfStock($product, $_POST['out_of_stock']);
-                    $adminProductWrapper->processProductCustomization($product, $_POST['custom_fields']);
+                    $customization_fields_ids = $adminProductWrapper->processProductCustomization($product, $_POST['custom_fields']);
                     $adminProductWrapper->processAttachments($product, $_POST['attachments']);
 
                     $adminProductController->processWarehouses();
 
-                    $response->setData(['product' => $product]);
+                    $response->setData([
+                        'product' => $product,
+                        'customization_fields_ids' => $customization_fields_ids
+                    ]);
                 }
 
                 if ($request->isXmlHttpRequest()) {
@@ -861,7 +864,7 @@ class ProductController extends FrameworkBundleAdminController
         // export CSV
         $csvTools->exportData(
             $dataCallback,
-            ['id_product' => 'ID',
+            ['id_product' => 'Product ID',
                 'image_link' => 'Image',
                 'name' => 'Name',
                 'reference' => 'Reference',

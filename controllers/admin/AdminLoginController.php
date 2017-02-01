@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -76,12 +76,10 @@ class AdminLoginControllerCore extends AdminController
                 $warningSslMessage = $this->trans('SSL is activated. However, your IP is allowed to enter unsecure mode for maintenance or local IP issues.', array(), 'Admin.Login.Notification');
             } else {
                 $url = 'https://'.Tools::safeOutput(Tools::getServerName()).Tools::safeOutput($_SERVER['REQUEST_URI']);
-                $warningSslMessage = sprintf(
-                    Translate::ppTags(
-                        Tools::displayError('SSL is activated. Please connect using the following link to [1]log in to secure mode (https://)[/1]', false),
-                        array('<a href="%s">')
-                    ),
-                    $url
+                $warningSslMessage = $this->trans(
+                    'SSL is activated. Please connect using the following link to [1]log in to secure mode (https://)[/1]',
+                    array('[1]' => '<a href="' . $url .'">', '[/1]' => '</a>'),
+                    'Admin.Login.Notification'
                 );
             }
             $this->context->smarty->assign('warningSslMessage', $warningSslMessage);
@@ -209,7 +207,7 @@ class AdminLoginControllerCore extends AdminController
                 $this->errors[] = $this->trans('This employee does not manage the shop anymore (either the shop has been deleted or permissions have been revoked).', array(), 'Admin.Login.Notification');
                 $this->context->employee->logout();
             } else {
-                PrestaShopLogger::addLog(sprintf($this->trans('Back office connection from %s', array(), 'Admin.AdvParameters.Feature'), Tools::getRemoteAddr()), 1, null, '', 0, true, (int)$this->context->employee->id);
+                PrestaShopLogger::addLog(sprintf($this->trans('Back office connection from %s', array(), 'Admin.Advparameters.Feature'), Tools::getRemoteAddr()), 1, null, '', 0, true, (int)$this->context->employee->id);
 
                 $this->context->employee->remote_addr = (int)ip2long(Tools::getRemoteAddr());
                 // Update cookie

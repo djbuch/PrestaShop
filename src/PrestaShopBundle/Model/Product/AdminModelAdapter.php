@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -27,7 +27,6 @@
 namespace PrestaShopBundle\Model\Product;
 
 use PrestaShop\PrestaShop\Adapter\Configuration;
-use PrestaShop\PrestaShop\Core\Cldr\Repository as cldrRepository;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Adapter\Product\AdminProductWrapper;
 use PrestaShop\PrestaShop\Adapter\Tools;
@@ -591,6 +590,7 @@ class AdminModelAdapter extends \PrestaShopBundle\Model\AdminModelAdapter
 
         foreach ($customizationFields as $customizationField) {
             $baseObject = [
+                'id_customization_field' => $customizationField[$this->locales[0]['id_lang']]['id_customization_field'],
                 'label' => [],
                 'type' => $customizationField[$this->locales[0]['id_lang']]['type'],
                 'require' => $customizationField[$this->locales[0]['id_lang']]['required'] == 1 ? true : false,

@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -3222,8 +3222,9 @@ class ProductCore extends ObjectModel
     public function getPublicPrice($tax = true, $id_product_attribute = null, $decimals = 6,
             $divisor = null, $only_reduc = false, $usereduc = true, $quantity = 1)
     {
+        $specific_price_output = null;
         return Product::getPriceStatic((int)$this->id, $tax, $id_product_attribute, $decimals, $divisor, $only_reduc, $usereduc, $quantity,
-            false, null, null, null, null, true, true, null, false);
+            false, null, null, null, $specific_price_output, true, true, null, false);
     }
 
     public function getIdProductAttributeMostExpensive()
@@ -5490,7 +5491,7 @@ class ProductCore extends ObjectModel
     public function setWsPositionInCategory($position)
     {
         if ($position < 0) {
-            WebserviceRequest::getInstance()->setError(500, Tools::displayError('You cannot set a negative position, the minimum for a position is 0.'), 134);
+            WebserviceRequest::getInstance()->setError(500, $this->trans('You cannot set a negative position, the minimum for a position is 0.', array(), 'Admin.Catalog.Notification'), 134);
         }
         $result = Db::getInstance()->executeS('
 			SELECT `id_product`
@@ -5499,7 +5500,7 @@ class ProductCore extends ObjectModel
 			ORDER BY `position`
 		');
         if (($position > 0) && ($position + 1 > count($result))) {
-            WebserviceRequest::getInstance()->setError(500, Tools::displayError('You cannot set a position greater than the total number of products in the category, minus 1 (position numbering starts at 0).'), 135);
+            WebserviceRequest::getInstance()->setError(500, $this->trans('You cannot set a position greater than the total number of products in the category, minus 1 (position numbering starts at 0).', array(), 'Admin.Catalog.Notification'), 135);
         }
 
         foreach ($result as &$value) {

@@ -1,7 +1,5 @@
 {include file='_partials/form-errors.tpl' errors=$errors['']}
 
-{* TODO StarterTheme: HOOKS!!! *}
-
 <form id="login-form" action="{$action}" method="post">
 
   <section>
@@ -14,7 +12,7 @@
     {/block}
     <div class="forgot-password">
       <a href="{$urls.pages.password}" rel="nofollow">
-        {l s='Forgot your password?' d='Shop.Theme.CustomerAccount'}
+        {l s='Forgot your password?' d='Shop.Theme.Customeraccount'}
       </a>
     </div>
   </section>

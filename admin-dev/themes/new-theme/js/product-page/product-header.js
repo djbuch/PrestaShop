@@ -1,5 +1,5 @@
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -53,13 +53,6 @@ export default function() {
         }
       });
     }
-  });
-
-  $('.js-btn-save').on('click', () =>{
-    $('.js-spinner').show();
-    $( document ).ajaxComplete(()=> {
-      $('.js-spinner').hide();
-    });
   });
 
   var init = () => {

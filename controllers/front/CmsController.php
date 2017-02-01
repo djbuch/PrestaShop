@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -68,16 +68,16 @@ class CmsControllerCore extends FrontController
         if (Validate::isLoadedObject($this->cms)) {
             $adtoken = Tools::getAdminToken('AdminCmsContent'.(int) Tab::getIdFromClassName('AdminCmsContent').(int) Tools::getValue('id_employee'));
             if (!$this->cms->isAssociatedToShop() || !$this->cms->active && Tools::getValue('adtoken') != $adtoken) {
-                header('HTTP/1.1 404 Not Found');
-                header('Status: 404 Not Found');
+              $this->redirect_after = '404';
+              $this->redirect();
             } else {
                 $this->assignCase = 1;
             }
         } elseif (Validate::isLoadedObject($this->cms_category) && $this->cms_category->active) {
             $this->assignCase = 2;
         } else {
-            header('HTTP/1.1 404 Not Found');
-            header('Status: 404 Not Found');
+          $this->redirect_after = '404';
+          $this->redirect();
         }
     }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -61,7 +61,7 @@ class CurrencyCore extends ObjectModel
         'primary' => 'id_currency',
         'multilang_shop' => true,
         'fields' => array(
-            'name' => array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 32),
+            'name' => array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 64),
             'iso_code' => array('type' => self::TYPE_STRING, 'validate' => 'isLanguageIsoCode', 'required' => true, 'size' => 3),
             'conversion_rate' => array('type' => self::TYPE_FLOAT, 'validate' => 'isUnsignedFloat', 'required' => true, 'shop' => true),
             'deleted' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
@@ -523,14 +523,14 @@ class CurrencyCore extends ObjectModel
     {
         // Parse
         if (!$feed = Tools::simplexml_load_file(_PS_CURRENCY_FEED_URL_)) {
-            return Tools::displayError('Cannot parse feed.');
+            return Context::getContext()->getTranslator()->trans('Cannot parse feed.', array(), 'Admin.Notifications.Error');
         }
 
         // Default feed currency (EUR)
         $isoCodeSource = strval($feed->source['iso_code']);
 
         if (!$defaultCurrency = Currency::getDefaultCurrency()) {
-            return Tools::displayError('No default currency');
+            return Context::getContext()->getTranslator()->trans('No default currency', array(), 'Admin.Notifications.Error');
         }
 
         $currencies = Currency::getCurrencies(true, false, true);

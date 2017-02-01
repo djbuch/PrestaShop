@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -670,11 +670,14 @@ class MediaCore
      */
     public static function clearCache()
     {
-        foreach (array(_PS_THEME_DIR_.'cache') as $dir) {
-            if (file_exists($dir)) {
-                foreach (array_diff(scandir($dir), array('..', '.', 'index.php')) as $file) {
-                    Tools::deleteFile($dir.DIRECTORY_SEPARATOR.$file);
-                }
+        $files = array_merge(
+            glob(_PS_THEME_DIR_.'assets/cache/*'),
+            glob(_PS_THEME_DIR_.'cache/*')
+        );
+
+        foreach ($files as $file) {
+            if ('index.php' !== basename($file)) {
+                Tools::deleteFile($file);
             }
         }
 

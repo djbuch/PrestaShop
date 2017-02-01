@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -213,27 +213,28 @@ class ProductPresenter
     protected function shouldEnableAddToCartButton(array $product, ProductPresentationSettings $settings)
     {
         if (($product['customizable'] == 2 || !empty($product['customization_required']))) {
-            $shouldShowButton = false;
+            $shouldEnable = false;
 
             if (isset($product['customizations'])) {
-                $shouldShowButton = true;
+                $shouldEnable = true;
                 foreach ($product['customizations']['fields'] as $field) {
                     if ($field['required'] && !$field['is_customized']) {
-                        $shouldShowButton = false;
+                        $shouldEnable = false;
                     }
                 }
             }
         } else {
-            $shouldShowButton = true;
+            $shouldEnable = true;
         }
 
-        $shouldShowButton = $shouldShowButton && $this->shouldShowAddToCartButton($product);
+        $shouldEnable = $shouldEnable && $this->shouldShowAddToCartButton($product);
 
-        if ($product['quantity'] <= 0 && !$product['allow_oosp']) {
-            $shouldShowButton = false;
+        if ($settings->stock_management_enabled && !$product['allow_oosp'] && isset($product['quantity_wanted']) &&
+            ($product['quantity'] <= 0 || $product['quantity'] < $product['quantity_wanted'])) {
+            $shouldEnable = false;
         }
 
-        return $shouldShowButton;
+        return $shouldEnable;
     }
 
     private function getAddToCartURL(array $product)

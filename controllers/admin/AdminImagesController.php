@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -365,7 +365,7 @@ class AdminImagesControllerCore extends AdminController
                 } elseif (!Configuration::updateValue('PS_IMAGE_QUALITY', Tools::getValue('PS_IMAGE_QUALITY'))
                     || !Configuration::updateValue('PS_JPEG_QUALITY', Tools::getValue('PS_JPEG_QUALITY'))
                     || !Configuration::updateValue('PS_PNG_QUALITY', Tools::getValue('PS_PNG_QUALITY'))) {
-                    $this->errors[] = Tools::displayError('Unknown error.');
+                    $this->errors[] = $this->trans('Unknown error.', array(), 'Admin.Notifications.Error');
                 } else {
                     $this->confirmations[] = $this->_conf[6];
                 }
@@ -669,7 +669,7 @@ class AdminImagesControllerCore extends AdminController
             }
             if (($return = $this->_regenerateNewImages($proc['dir'], $formats, ($proc['type'] == 'products' ? true : false))) === true) {
                 if (!count($this->errors)) {
-                    $this->errors[] = sprintf(Tools::displayError('Cannot write images for this type: %s. Please check the %s folder\'s writing permissions.'), $proc['type'], $proc['dir']);
+                    $this->errors[] = $this->trans('Cannot write images for this type: %1$s. Please check the %2$s folder\'s writing permissions.', array($proc['type'], $proc['dir']), 'Admin.Design.Notification');
                 }
             } elseif ($return == 'timeout') {
                 $this->errors[] = $this->trans('Only part of the images have been regenerated. The server timed out before finishing.', array(), 'Admin.Design.Notification');
@@ -681,7 +681,7 @@ class AdminImagesControllerCore extends AdminController
                 }
                 if (!count($this->errors)) {
                     if ($this->_regenerateNoPictureImages($proc['dir'], $formats, $languages)) {
-                        $this->errors[] = sprintf(Tools::displayError('Cannot write "No picture" image to (%s) images folder. Please check the folder\'s writing permissions.'), $proc['type']);
+                        $this->errors[] = $this->trans('Cannot write "No picture" image to %s images folder. Please check the folder\'s writing permissions.', array($proc['type']), 'Admin.Design.Notification');
                     }
                 }
             }

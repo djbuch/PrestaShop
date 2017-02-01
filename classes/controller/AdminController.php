@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -447,7 +447,7 @@ class AdminControllerCore extends Controller
             7 => $this->trans('The image was successfully deleted.', array(), 'Admin.Notifications.Success'),
             8 => $this->trans('The module was successfully downloaded.', array(), 'Admin.Modules.Notification'),
             9 => $this->trans('The thumbnails were successfully regenerated.', array(), 'Admin.Notifications.Success'),
-            10 => $this->trans('The message was successfully sent to the customer.', array(), 'Admin.OrdersCustomers.Notification'),
+            10 => $this->trans('The message was successfully sent to the customer.', array(), 'Admin.Orderscustomers.Notification'),
             11 => $this->trans('Comment successfully added.', array(), 'Admin.Notifications.Success'),
             12 => $this->trans('Module(s) installed successfully.', array(), 'Admin.Modules.Notification'),
             13 => $this->trans('Module(s) uninstalled successfully.', array(), 'Admin.Modules.Notification'),
@@ -467,7 +467,7 @@ class AdminControllerCore extends Controller
             27 => $this->trans('The image\'s shop association has been modified.', array(), 'Admin.Notifications.Success'),
             28 => $this->trans('A zone has been assigned to the selection successfully.', array(), 'Admin.Notifications.Success'),
             29 => $this->trans('Successful upgrade.', array(), 'Admin.Notifications.Success'),
-            30 => $this->trans('A partial refund was successfully created.', array(), 'Admin.OrdersCustomers.Notification'),
+            30 => $this->trans('A partial refund was successfully created.', array(), 'Admin.Orderscustomers.Notification'),
             31 => $this->trans('The discount was successfully generated.', array(), 'Admin.Catalog.Notification'),
             32 => $this->trans('Successfully signed in to PrestaShop Addons.', array(), 'Admin.Modules.Notification'),
         );
@@ -863,7 +863,7 @@ class AdminControllerCore extends Controller
                     if (is_array($value)) {
                         if (isset($value[0]) && !empty($value[0])) {
                             if (!Validate::isDate($value[0])) {
-                                $this->errors[] = Tools::displayError('The \'From\' date format is invalid (YYYY-MM-DD)');
+                                $this->errors[] = $this->trans('The \'From\' date format is invalid (YYYY-MM-DD)', array(), 'Admin.Notifications.Error');
                             } else {
                                 $sql_filter .= ' AND '.pSQL($key).' >= \''.pSQL(Tools::dateFrom($value[0])).'\'';
                             }
@@ -871,7 +871,7 @@ class AdminControllerCore extends Controller
 
                         if (isset($value[1]) && !empty($value[1])) {
                             if (!Validate::isDate($value[1])) {
-                                $this->errors[] = Tools::displayError('The \'To\' date format is invalid (YYYY-MM-DD)');
+                                $this->errors[] = $this->trans('The \'To\' date format is invalid (YYYY-MM-DD)', array(), 'Admin.Notifications.Error');
                             } else {
                                 $sql_filter .= ' AND '.pSQL($key).' <= \''.pSQL(Tools::dateTo($value[1])).'\'';
                             }
@@ -974,7 +974,7 @@ class AdminControllerCore extends Controller
                 }
             }
         }
-        $this->errors[] = Tools::displayError('An error occurred while attempting to delete the image. (cannot load object).');
+        $this->errors[] = $this->trans('An error occurred while attempting to delete the image. (cannot load object).', array(), 'Admin.Notifications.Error');
         return $object;
     }
 
@@ -1001,10 +1001,14 @@ class AdminControllerCore extends Controller
         $fd = fopen('php://output', 'wb');
         $headers = array();
         foreach ($this->fields_list as $key => $datas) {
-            if ($datas['title'] == 'PDF') {
+            if ('PDF' === $datas['title']) {
                 unset($this->fields_list[$key]);
             } else {
-                $headers[] = Tools::htmlentitiesDecodeUTF8($datas['title']);
+                if ('ID' === $datas['title']) {
+                    $headers[] = strtolower(Tools::htmlentitiesDecodeUTF8($datas['title']));
+                } else {
+                    $headers[] = Tools::htmlentitiesDecodeUTF8($datas['title']);
+                }
             }
         }
         fputcsv($fd, $headers, ';', $text_delimiter);
@@ -1050,11 +1054,11 @@ class AdminControllerCore extends Controller
             $res = true;
             // check if request at least one object with noZeroObject
             if (isset($object->noZeroObject) && count(call_user_func(array($this->className, $object->noZeroObject))) <= 1) {
-                $this->errors[] = Tools::displayError('You need at least one object.').
+                $this->errors[] = $this->trans('You need at least one object.', array(), 'Admin.Notifications.Error').
                     ' <b>'.$this->table.'</b><br />'.
-                    Tools::displayError('You cannot delete all of the items.');
+                    $this->trans('You cannot delete all of the items.', array(), 'Admin.Notifications.Error');
             } elseif (array_key_exists('delete', $this->list_skip_actions) && in_array($object->id, $this->list_skip_actions['delete'])) { //check if some ids are in list_skip_actions and forbid deletion
-                    $this->errors[] = Tools::displayError('You cannot delete this item.');
+                    $this->errors[] = $this->trans('You cannot delete this item.', array(), 'Admin.Notifications.Error');
             } else {
                 if ($this->deleted) {
                     if (!empty($this->fieldImageSettings)) {
@@ -1062,7 +1066,7 @@ class AdminControllerCore extends Controller
                     }
 
                     if (!$res) {
-                        $this->errors[] = Tools::displayError('Unable to delete associated images.');
+                        $this->errors[] = $this->trans('Unable to delete associated images.', array(), 'Admin.Notifications.Error');
                     }
 
                     $object->deleted = 1;
@@ -1072,15 +1076,15 @@ class AdminControllerCore extends Controller
                 } elseif ($res = $object->delete()) {
                     $this->redirect_after = self::$currentIndex.'&conf=1&token='.$this->token;
                 }
-                $this->errors[] = Tools::displayError('An error occurred during deletion.');
+                $this->errors[] = $this->trans('An error occurred during deletion.', array(), 'Admin.Notifications.Error');
                 if ($res) {
                     PrestaShopLogger::addLog(sprintf($this->l('%s deletion', 'AdminTab', false, false), $this->className), 1, null, $this->className, (int)$this->object->id, true, (int)$this->context->employee->id);
                 }
             }
         } else {
-            $this->errors[] = Tools::displayError('An error occurred while deleting the object.').
+            $this->errors[] = $this->trans('An error occurred while deleting the object.', array(), 'Admin.Notifications.Error').
                 ' <b>'.$this->table.'</b> '.
-                Tools::displayError('(cannot load object)');
+                $this->trans('(cannot load object)', array(), 'Admin.Notifications.Error');
         }
         return $object;
     }
@@ -1119,7 +1123,7 @@ class AdminControllerCore extends Controller
             $this->copyFromPost($this->object, $this->table);
             $this->beforeAdd($this->object);
             if (method_exists($this->object, 'add') && !$this->object->add()) {
-                $this->errors[] = Tools::displayError('An error occurred while creating an object.').
+                $this->errors[] = $this->trans('An error occurred while creating an object.', array(), 'Admin.Notifications.Error').
                     ' <b>'.$this->table.' ('.Db::getInstance()->getMsgError().')</b>';
             } elseif (($_POST[$this->identifier] = $this->object->id /* voluntary do affectation here */) && $this->postImage($this->object->id) && !count($this->errors) && $this->_redirect) {
                 PrestaShopLogger::addLog(sprintf($this->l('%s addition', 'AdminTab', false, false), $this->className), 1, null, $this->className, (int)$this->object->id, true, (int)$this->context->employee->id);
@@ -1197,7 +1201,7 @@ class AdminControllerCore extends Controller
                     }
 
                     if (!$result) {
-                        $this->errors[] = Tools::displayError('An error occurred while updating an object.').
+                        $this->errors[] = $this->trans('An error occurred while updating an object.', array(), 'Admin.Notifications.Error').
                             ' <b>'.$this->table.'</b> ('.Db::getInstance()->getMsgError().')';
                     } elseif ($this->postImage($object->id) && !count($this->errors) && $this->_redirect) {
                         $parent_id = (int)Tools::getValue('id_parent', 1);
@@ -1222,8 +1226,8 @@ class AdminControllerCore extends Controller
                     }
                     PrestaShopLogger::addLog(sprintf($this->l('%s modification', 'AdminTab', false, false), $this->className), 1, null, $this->className, (int)$object->id, true, (int)$this->context->employee->id);
                 } else {
-                    $this->errors[] = Tools::displayError('An error occurred while updating an object.').
-                        ' <b>'.$this->table.'</b> '.Tools::displayError('(cannot load object)');
+                    $this->errors[] = $this->trans('An error occurred while updating an object.', array(), 'Admin.Notifications.Error').
+                        ' <b>'.$this->table.'</b> '.$this->trans('(cannot load object)', array(), 'Admin.Notifications.Error');
                 }
             }
         }
@@ -1255,7 +1259,7 @@ class AdminControllerCore extends Controller
         $object = new $this->className();
 
         if (!$object->addFieldsRequiredDatabase($fields)) {
-            $this->errors[] = Tools::displayError('An error occurred when attempting to update the required fields.');
+            $this->errors[] = $this->trans('An error occurred when attempting to update the required fields.', array(), 'Admin.Notifications.Error');
         } else {
             $this->redirect_after = self::$currentIndex.'&conf=4&token='.$this->token;
         }
@@ -1287,12 +1291,12 @@ class AdminControllerCore extends Controller
                 $page = $page > 1 ? '&submitFilter'.$this->table.'='.(int)$page : '';
                 $this->redirect_after .= '&conf=5'.$id_category.$page;
             } else {
-                $this->errors[] = Tools::displayError('An error occurred while updating the status.');
+                $this->errors[] = $this->trans('An error occurred while updating the status.', array(), 'Admin.Notifications.Error');
             }
         } else {
-            $this->errors[] = Tools::displayError('An error occurred while updating the status for an object.').
+            $this->errors[] = $this->trans('An error occurred while updating the status for an object.', array(), 'Admin.Notifications.Error').
                 ' <b>'.$this->table.'</b> '.
-                Tools::displayError('(cannot load object)');
+                $this->trans('(cannot load object)', array(), 'Admin.Notifications.Error');
         }
 
         return $object;
@@ -1306,10 +1310,10 @@ class AdminControllerCore extends Controller
     public function processPosition()
     {
         if (!Validate::isLoadedObject($object = $this->loadObject())) {
-            $this->errors[] = Tools::displayError('An error occurred while updating the status for an object.').
-                ' <b>'.$this->table.'</b> '.Tools::displayError('(cannot load object)');
+            $this->errors[] = $this->trans('An error occurred while updating the status for an object.', array(), 'Admin.Notifications.Error').
+                ' <b>'.$this->table.'</b> '.$this->trans('(cannot load object)', array(), 'Admin.Notifications.Error');
         } elseif (!$object->updatePosition((int)Tools::getValue('way'), (int)Tools::getValue('position'))) {
-            $this->errors[] = Tools::displayError('Failed to update the position.');
+            $this->errors[] = $this->trans('Failed to update the position.', array(), 'Admin.Notifications.Error');
         } else {
             $id_identifier_str = ($id_identifier = (int)Tools::getValue($this->identifier)) ? '&'.$this->identifier.'='.$id_identifier : '';
             $redirect = self::$currentIndex.'&'.$this->table.'Orderby=position&'.$this->table.'Orderway=asc&conf=5'.$id_identifier_str.'&token='.$this->token;
@@ -1402,11 +1406,11 @@ class AdminControllerCore extends Controller
                     if (isset($values['type']) && $values['type'] == 'textLang') {
                         foreach ($languages as $language) {
                             if (($value = Tools::getValue($field.'_'.$language['id_lang'])) == false && (string)$value != '0') {
-                                $this->errors[] = sprintf(Tools::displayError('field %s is required.'), $values['title']);
+                                $this->errors[] = $this->trans('field %s is required.', array($values['title']), 'Admin.Notifications.Error');
                             }
                         }
                     } elseif (($value = Tools::getValue($field)) == false && (string)$value != '0') {
-                        $this->errors[] = sprintf(Tools::displayError('field %s is required.'), $values['title']);
+                        $this->errors[] = $this->trans('field %s is required.', array($values['title']), 'Admin.Notifications.Error');
                     }
                 }
 
@@ -1416,14 +1420,14 @@ class AdminControllerCore extends Controller
                         if (Tools::getValue($field.'_'.$language['id_lang']) && isset($values['validation'])) {
                             $values_validation = $values['validation'];
                             if (!Validate::$values_validation(Tools::getValue($field.'_'.$language['id_lang']))) {
-                                $this->errors[] = sprintf(Tools::displayError('field %s is invalid.'), $values['title']);
+                                $this->errors[] = $this->trans('The %s field is invalid.', array($values['title']), 'Admin.Notifications.Error');
                             }
                         }
                     }
                 } elseif (Tools::getValue($field) && isset($values['validation'])) {
                     $values_validation = $values['validation'];
                     if (!Validate::$values_validation(Tools::getValue($field))) {
-                        $this->errors[] = sprintf(Tools::displayError('field %s is invalid.'), $values['title']);
+                        $this->errors[] = $this->trans('The %s field is invalid.', array($values['title']), 'Admin.Notifications.Error');
                     }
                 }
 
@@ -1457,7 +1461,7 @@ class AdminControllerCore extends Controller
                                 if (Validate::isCleanHtml($val)) {
                                     $list[$language['id_lang']] = $val;
                                 } else {
-                                    $this->errors[] = Tools::displayError('Cannot add configuration '.$key.' for lang '.Language::getIsoById((int)$language['id_lang']));
+                                    $this->errors[] = $this->trans('Cannot add configuration %1$s for %2$s language', array($key, Language::getIsoById((int)$language['id_lang'])), 'Admin.International.Notification');
                                 }
                             }
                         }
@@ -1468,7 +1472,7 @@ class AdminControllerCore extends Controller
                             if (Validate::isCleanHtml($val)) {
                                 Configuration::updateValue($key, $val);
                             } else {
-                                $this->errors[] = Tools::displayError('Cannot add configuration '.$key);
+                                $this->errors[] = $this->trans('Cannot add configuration %s', array($key), 'Admin.Notifications.Error');
                             }
                         }
                     }
@@ -1632,7 +1636,7 @@ class AdminControllerCore extends Controller
                 return $this->object;
             }
             // throw exception
-            $this->errors[] = Tools::displayError('The object cannot be loaded (or found)');
+            $this->errors[] = $this->trans('The object cannot be loaded (or found)', array(), 'Admin.Notifications.Error');
             return false;
         } elseif ($opt) {
             if (!$this->object) {
@@ -1640,7 +1644,7 @@ class AdminControllerCore extends Controller
             }
             return $this->object;
         } else {
-            $this->errors[] = Tools::displayError('The object cannot be loaded (the identifier is missing or invalid)');
+            $this->errors[] = $this->trans('The object cannot be loaded (the identifier is missing or invalid)', array(), 'Admin.Notifications.Error');
             return false;
         }
     }
@@ -2042,7 +2046,7 @@ class AdminControllerCore extends Controller
     public function initContent()
     {
         if (!$this->viewAccess()) {
-            $this->errors[] = Tools::displayError('You do not have permission to view this.');
+            $this->errors[] = $this->trans('You do not have permission to view this.', array(), 'Admin.Notifications.Error');
             return;
         }
 
@@ -2080,7 +2084,8 @@ class AdminControllerCore extends Controller
         ));
     }
 
-    public function initToolbarFlags() {
+    public function initToolbarFlags()
+    {
         $this->getLanguages();
 
         $this->initToolbar();
@@ -2191,7 +2196,7 @@ class AdminControllerCore extends Controller
             }
         } else {
             foreach (libxml_get_errors() as $error) {
-                $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in country_module_list.xml file.', $error->message));
+                $this->errors[] = $this->trans('Error found : %1$s in country_module_list.xml file.', array($error->message), 'Admin.Modules.Notification');
             }
         }
 
@@ -2208,7 +2213,7 @@ class AdminControllerCore extends Controller
             }
         } else {
             foreach (libxml_get_errors() as $error) {
-                $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in must_have_module_list.xml file.', $error->message));
+                $this->errors[] = $this->trans('Error found : %1$s in must_have_module_list.xml file.', array($error->message), 'Admin.Modules.Notification');
             }
         }
 
@@ -2927,28 +2932,28 @@ class AdminControllerCore extends Controller
             if ($this->access('delete')) {
                 $this->action = 'delete_image';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to delete this.');
+                $this->errors[] = $this->trans('You do not have permission to delete this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['delete'.$this->table])) {
             /* Delete object */
             if ($this->access('delete')) {
                 $this->action = 'delete';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to delete this.');
+                $this->errors[] = $this->trans('You do not have permission to delete this.', array(), 'Admin.Notifications.Error');
             }
         } elseif ((isset($_GET['status'.$this->table]) || isset($_GET['status'])) && Tools::getValue($this->identifier)) {
             /* Change object statuts (active, inactive) */
             if ($this->access('edit')) {
                 $this->action = 'status';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['position'])) {
             /* Move an object */
             if ($this->access('edit') == '1') {
                 $this->action = 'position';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (Tools::isSubmit('submitAdd'.$this->table)
                  || Tools::isSubmit('submitAdd'.$this->table.'AndStay')
@@ -2964,7 +2969,7 @@ class AdminControllerCore extends Controller
                         $this->display = 'list';
                     }
                 } else {
-                    $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                    $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
                 }
             } else {
                 // case 2: creating new entry
@@ -2976,7 +2981,7 @@ class AdminControllerCore extends Controller
                         $this->display = 'list';
                     }
                 } else {
-                    $this->errors[] = Tools::displayError('You do not have permission to add this.');
+                    $this->errors[] = $this->trans('You do not have permission to add this.', array(), 'Admin.Notifications.Error');
                 }
             }
         } elseif (isset($_GET['add'.$this->table])) {
@@ -2984,26 +2989,26 @@ class AdminControllerCore extends Controller
                 $this->action = 'new';
                 $this->display = 'add';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to add this.');
+                $this->errors[] = $this->trans('You do not have permission to add this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['update'.$this->table]) && isset($_GET[$this->identifier])) {
             $this->display = 'edit';
             if (!$this->access('edit')) {
-                $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['view'.$this->table])) {
             if ($this->access('view')) {
                 $this->display = 'view';
                 $this->action = 'view';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to view this.');
+                $this->errors[] = $this->trans('You do not have permission to view this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['details'.$this->table])) {
             if ($this->access('view')) {
                 $this->display = 'details';
                 $this->action = 'details';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to view this.');
+                $this->errors[] = $this->trans('You do not have permission to view this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (isset($_GET['export'.$this->table])) {
             if ($this->access('view')) {
@@ -3018,7 +3023,7 @@ class AdminControllerCore extends Controller
             if ($this->access('edit')) {
                 $this->action = 'update_options';
             } else {
-                $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
             }
         } elseif (Tools::getValue('action') && method_exists($this, 'process'.ucfirst(Tools::toCamelCase(Tools::getValue('action'))))) {
             $this->action = Tools::getValue('action');
@@ -3045,14 +3050,14 @@ class AdminControllerCore extends Controller
                                 $this->boxes = Tools::getValue($this->table.'_valuesBox');
                             }
                         } else {
-                            $this->errors[] = Tools::displayError('You do not have permission to delete this.');
+                            $this->errors[] = $this->trans('You do not have permission to delete this.', array(), 'Admin.Notifications.Error');
                         }
                         break;
                     } elseif ($this->access('edit')) {
                         $this->action = 'bulk'.$bulk_action;
                         $this->boxes = Tools::getValue($this->table.'Box');
                     } else {
-                        $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                        $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
                     }
                     break;
                 } elseif (Tools::isSubmit('submitBulk')) {
@@ -3061,14 +3066,14 @@ class AdminControllerCore extends Controller
                             $this->action = 'bulk'.$bulk_action;
                             $this->boxes = Tools::getValue($this->table.'Box');
                         } else {
-                            $this->errors[] = Tools::displayError('You do not have permission to delete this.');
+                            $this->errors[] = $this->trans('You do not have permission to delete this.', array(), 'Admin.Notifications.Error');
                         }
                         break;
                     } elseif ($this->access('edit')) {
                         $this->action = 'bulk'.Tools::getValue('select_submitBulk');
                         $this->boxes = Tools::getValue($this->table.'Box');
                     } else {
-                        $this->errors[] = Tools::displayError('You do not have permission to edit this.');
+                        $this->errors[] = $this->trans('You do not have permission to edit this.', array(), 'Admin.Notifications.Error');
                     }
                     break;
                 }
@@ -3097,8 +3102,7 @@ class AdminControllerCore extends Controller
         $start = 0,
         $limit = null,
         $id_lang_shop = false
-    )
-    {
+    ) {
         Hook::exec('action'.$this->controller_name.'ListingFieldsModifier', array(
             'select' => &$this->_select,
             'join' => &$this->_join,
@@ -3158,8 +3162,8 @@ class AdminControllerCore extends Controller
                     $this->_where .= ' AND EXISTS (
                         SELECT 1
                         FROM `'._DB_PREFIX_.$this->table.'_shop` sa
-                        WHERE a.'.$this->identifier.' = sa.'.$this->identifier.
-                        ' AND sa.id_shop IN ('.implode(', ', Shop::getContextListShopID()).')
+                        WHERE a.`'.bqSQL($this->identifier).'` = sa.`'.bqSQL($this->identifier).'`
+                         AND sa.id_shop IN ('.implode(', ', Shop::getContextListShopID()).')
                     )';
                 }
             }
@@ -3268,8 +3272,8 @@ class AdminControllerCore extends Controller
     {
         $shopJoinClause = '';
         if ($this->shopLinkType) {
-            $shopJoinClause = ' LEFT JOIN '._DB_PREFIX_.$this->shopLinkType.' shop
-                            ON a.id_'.$this->shopLinkType.' = shop.id_'.$this->shopLinkType;
+            $shopJoinClause = ' LEFT JOIN `'._DB_PREFIX_.bqSQL($this->shopLinkType).'` shop
+                            ON a.`id_'.bqSQL($this->shopLinkType).'` = shop.`id_'.bqSQL($this->shopLinkType).'`';
         }
 
         return "\n".$this->getLanguageJoinClause($id_lang, $id_lang_shop).
@@ -3286,8 +3290,8 @@ class AdminControllerCore extends Controller
     {
         $languageJoinClause = '';
         if ($this->lang) {
-            $languageJoinClause = 'LEFT JOIN `' . _DB_PREFIX_ . $this->table . '_lang` b ON (b.`' .
-                $this->identifier . '` = a.`' . $this->identifier . '` AND b.`id_lang` = ' . (int)$idLang;
+            $languageJoinClause = 'LEFT JOIN `' . _DB_PREFIX_ . bqSQL($this->table). '_lang` b 
+                ON (b.`' . bqSQL($this->identifier) . '` = a.`' . bqSQL($this->identifier) . '` AND b.`id_lang` = ' . (int)$idLang;
 
             if ($idLangShop) {
                 if (!Shop::isFeatureActive()) {
@@ -3645,7 +3649,7 @@ class AdminControllerCore extends Controller
                     $value = Tools::getValue($field.'_'.$default_language->id);
                     if (empty($value)) {
                         $this->errors[$field.'_'.$default_language->id] = sprintf(
-                            Tools::displayError('The field %1$s is required at least in %2$s.'),
+                            $this->trans('The field %1$s is required at least in %2$s.', array(), 'Admin.Notifications.Error'),
                             $object->displayFieldName($field, $class_name),
                             $default_language->name
                         );
@@ -3680,7 +3684,7 @@ class AdminControllerCore extends Controller
                         }
                         if (!$res) {
                             $this->errors[$field_lang.'_'.$language['id_lang']] = sprintf(
-                                Tools::displayError('The %1$s field (%2$s) is invalid.'),
+                                $this->trans('The %1$s field (%2$s) is invalid.', array(), 'Admin.Notifications.Error'),
                                 call_user_func(array($class_name, 'displayFieldName'), $field_lang, $class_name),
                                 $language['name']
                             );
@@ -3876,7 +3880,7 @@ class AdminControllerCore extends Controller
             if ((!isset($field['empty']) || !$field['empty'] || (isset($field['empty']) && $field['empty'] && $value)) && $valid_method_exists) {
                 $field_validation = $field['validation'];
                 if (!Validate::$field_validation($value)) {
-                    $this->errors[] = Tools::displayError($field['title'].' : Incorrect value');
+                    $this->errors[] = $this->trans('%s : Incorrect value', array($field['title']), 'Admin.Notifications.Error');
                     return false;
                 }
             }
@@ -3948,12 +3952,12 @@ class AdminControllerCore extends Controller
 
             // Evaluate the memory required to resize the image: if it's too much, you can't resize it.
             if (!ImageManager::checkImageMemoryLimit($tmp_name)) {
-                $this->errors[] = Tools::displayError('Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration settings. ');
+                $this->errors[] = $this->trans('Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration settings. ', array(), 'Admin.Notifications.Error');
             }
 
             // Copy new image
             if (empty($this->errors) && !ImageManager::resize($tmp_name, _PS_IMG_DIR_.$dir.$id.'.'.$this->imageType, (int)$width, (int)$height, ($ext ? $ext : $this->imageType))) {
-                $this->errors[] = Tools::displayError('An error occurred while uploading the image.');
+                $this->errors[] = $this->trans('An error occurred while uploading the image.', array(), 'Admin.Notifications.Error');
             }
 
             if (count($this->errors)) {
@@ -3983,9 +3987,9 @@ class AdminControllerCore extends Controller
 
                 // Check if all object will be deleted
                 if ($objects_count <= 1 || count($this->boxes) == $objects_count) {
-                    $this->errors[] = Tools::displayError('You need at least one object.').
+                    $this->errors[] = $this->trans('You need at least one object.', array(), 'Admin.Notifications.Error').
                         ' <b>'.$this->table.'</b><br />'.
-                        Tools::displayError('You cannot delete all of the items.');
+                        $this->trans('You cannot delete all of the items.', array(), 'Admin.Notifications.Error');
                 }
             } else {
                 $result = true;
@@ -4007,16 +4011,16 @@ class AdminControllerCore extends Controller
                     if ($delete_ok) {
                         PrestaShopLogger::addLog(sprintf($this->l('%s deletion', 'AdminTab', false, false), $this->className), 1, null, $this->className, (int)$to_delete->id, true, (int)$this->context->employee->id);
                     } else {
-                        $this->errors[] = sprintf(Tools::displayError('Can\'t delete #%d'), $id);
+                        $this->errors[] = sprintf($this->trans('Can\'t delete #%d', array(), 'Admin.Notifications.Error'), $id);
                     }
                 }
                 if ($result) {
                     $this->redirect_after = self::$currentIndex.'&conf=2&token='.$this->token;
                 }
-                $this->errors[] = Tools::displayError('An error occurred while deleting this selection.');
+                $this->errors[] = $this->trans('An error occurred while deleting this selection.', array(), 'Admin.Notifications.Error');
             }
         } else {
-            $this->errors[] = Tools::displayError('You must select at least one element to delete.');
+            $this->errors[] = $this->trans('You must select at least one element to delete.', array(), 'Admin.Notifications.Error');
         }
 
         if (isset($result)) {
@@ -4110,9 +4114,9 @@ class AdminControllerCore extends Controller
             if ($result) {
                 $this->redirect_after = self::$currentIndex.'&conf=28&token='.$this->token;
             }
-            $this->errors[] = Tools::displayError('An error occurred while assigning a zone to the selection.');
+            $this->errors[] = $this->trans('An error occurred while assigning a zone to the selection.', array(), 'Admin.Notifications.Error');
         } else {
-            $this->errors[] = Tools::displayError('You must select at least one element to assign a new zone.');
+            $this->errors[] = $this->trans('You must select at least one element to assign a new zone.', array(), 'Admin.Notifications.Error');
         }
 
         return $result;

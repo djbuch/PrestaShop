@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -95,6 +95,7 @@ class ProductCombination extends CommonAbstractType
             'required' => false,
             'label' => $this->translator->trans('Cost price', [], 'Admin.Catalog.Feature'),
             'currency' => $this->currency->iso_code,
+            'attr' => ['class' => 'attribute_wholesale_price']
         ))
         ->add('attribute_price', 'Symfony\Component\Form\Extension\Core\Type\MoneyType', array(
             'required' => false,
@@ -126,6 +127,7 @@ class ProductCombination extends CommonAbstractType
             'required' => false,
             'label' => $this->translator->trans('Impact on price per unit (tax excl.)', [], 'Admin.Catalog.Feature'),
             'currency' => $this->currency->iso_code,
+            'attr' => ['class' => 'attribute_unity'],
         ))
         ->add('attribute_minimal_quantity', 'Symfony\Component\Form\Extension\Core\Type\NumberType', array(
             'required' => false,

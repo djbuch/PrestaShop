@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -952,6 +952,7 @@ class CartCore extends ObjectModel
         }
 
         $pa_implode = array();
+        $separator = Configuration::get('PS_ATTRIBUTE_ANCHOR_SEPARATOR');
 
         foreach ($ipa_list as $id_product_attribute) {
             if ((int)$id_product_attribute && !array_key_exists($id_product_attribute.'-'.$id_lang, self::$_attributesLists)) {
@@ -982,19 +983,19 @@ class CartCore extends ObjectModel
         );
 
         foreach ($result as $row) {
-            self::$_attributesLists[$row['id_product_attribute'].'-'.$id_lang]['attributes'] .= $row['public_group_name'].' : '.$row['attribute_name'].', ';
-            self::$_attributesLists[$row['id_product_attribute'].'-'.$id_lang]['attributes_small'] .= $row['attribute_name'].', ';
+            self::$_attributesLists[$row['id_product_attribute'].'-'.$id_lang]['attributes'] .= $row['public_group_name'].' : '.$row['attribute_name'].$separator.' ';
+            self::$_attributesLists[$row['id_product_attribute'].'-'.$id_lang]['attributes_small'] .= $row['attribute_name'].$separator.' ';
         }
 
         foreach ($pa_implode as $id_product_attribute) {
             self::$_attributesLists[$id_product_attribute.'-'.$id_lang]['attributes'] = rtrim(
                 self::$_attributesLists[$id_product_attribute.'-'.$id_lang]['attributes'],
-                ', '
+                $separator.' '
             );
 
             self::$_attributesLists[$id_product_attribute.'-'.$id_lang]['attributes_small'] = rtrim(
                 self::$_attributesLists[$id_product_attribute.'-'.$id_lang]['attributes_small'],
-                ', '
+                $separator.' '
             );
         }
     }
@@ -1093,10 +1094,10 @@ class CartCore extends ObjectModel
         Cache::clean('Cart::getCartRules_'.$this->id.'-'.CartRule::FILTER_ACTION_REDUCTION);
         Cache::clean('Cart::getCartRules_'.$this->id.'-'.CartRule::FILTER_ACTION_GIFT);
 
-        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_ALL). '-ids';
-        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_SHIPPING). '-ids';
-        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_REDUCTION). '-ids';
-        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_GIFT). '-ids';
+        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_ALL. '-ids');
+        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_SHIPPING. '-ids');
+        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_REDUCTION. '-ids');
+        Cache::clean('Cart::getOrderedCartRulesIds_'.$this->id.'-'.CartRule::FILTER_ACTION_GIFT. '-ids');
 
         if ((int)$cartRule->gift_product) {
             $this->updateQty(1, $cartRule->gift_product, $cartRule->gift_product_attribute, false, 'up', 0, null, false);
@@ -1517,7 +1518,6 @@ class CartCore extends ObjectModel
         $id_customization = null,
         $id_address_delivery = 0
     ) {
-
         if (isset(self::$_nbProducts[$this->id])) {
             unset(self::$_nbProducts[$this->id]);
         }
@@ -1746,8 +1746,7 @@ class CartCore extends ObjectModel
         $products = null,
         $id_carrier = null,
         $use_cache = true
-    )
-    {
+    ) {
         // Dependencies
         $price_calculator = ServiceLocator::get('\\PrestaShop\\PrestaShop\\Adapter\\Product\\PriceCalculator');
 
@@ -3768,7 +3767,7 @@ class CartCore extends ObjectModel
 
         $hook = Hook::exec('actionCartSummary', $summary, null, true);
         if (is_array($hook)) {
-            $summary = array_merge($summary, array_shift($hook));
+            $summary = array_merge($summary, (array)array_shift($hook));
         }
 
         return $summary;

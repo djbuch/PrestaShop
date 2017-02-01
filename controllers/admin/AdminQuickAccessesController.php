@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -190,7 +190,7 @@ class AdminQuickAccessesControllerCore extends AdminController
             }
             /* voluntary do affectation here */
             elseif (($_POST[$this->identifier] = $this->object->id) && $this->postImage($this->object->id) && !count($this->errors) && $this->_redirect) {
-                PrestaShopLogger::addLog(sprintf($this->trans('%s addition', array(), 'Admin.AdvParameters.Feature'), $this->className), 1, null, $this->className, (int)$this->object->id, true, (int)$this->context->employee->id);
+                PrestaShopLogger::addLog(sprintf($this->trans('%s addition', array(), 'Admin.Advparameters.Feature'), $this->className), 1, null, $this->className, (int)$this->object->id, true, (int)$this->context->employee->id);
                 $this->afterAdd($this->object);
             }
         }

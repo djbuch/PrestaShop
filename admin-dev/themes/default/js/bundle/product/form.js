@@ -1,5 +1,5 @@
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -841,19 +841,34 @@ var form = (function() {
         $('*.has-danger').removeClass('has-danger');
         $('#form-nav li.has-error').removeClass('has-error');
       },
-      success: function(response) {
+      success: function() {
         showSuccessMessage(translate_javascripts['Form update success']);
-        if (redirect) {
-          if (target) {
-            if (target == '_blank') {
-              openBlank.location = redirect;
-            } else {
-              window.open(redirect, target);
-            }
-          } else {
-            window.location = redirect;
-          }
+        //update the customization ids
+        if (typeof response.customization_fields_ids != "undefined") {
+          $.each(response.customization_fields_ids, function (k, v) {
+              $("#form_step6_custom_fields_" + k + "_id_customization_field").val(v);
+          });
         }
+
+        $('.js-spinner').hide();
+
+        if (!redirect) {
+          return;
+        }
+
+        if (false === target) {
+          window.location = redirect;
+
+          return;
+        }
+
+        if ('_blank' !== target) {
+          window.open(redirect, target);
+
+          return;
+        }
+
+        openBlank.location = redirect;
       },
       error: function(response) {
         showErrorMessage(translate_javascripts['Form update errors']);
@@ -999,6 +1014,12 @@ var form = (function() {
       $('.btn-submit', elem).click(function(event) {
         event.preventDefault();
         send($(this).attr('data-redirect'), $(this).attr('target'));
+      });
+
+      $('.js-btn-save').on('click', function () {
+        event.preventDefault();
+        $('.js-spinner').show();
+        send($(this).attr('href'));
       });
 
       /** on active field change, send form */
@@ -1829,6 +1850,10 @@ var priceCalculation = (function() {
       /** combinations : update HT price field on change */
       $(document).on('keyup', '.combination-form .attribute_priceTI', function() {
         priceCalculation.impactTaxExclude($(this));
+      });
+      /** combinations : update wholesale price, unity and price TE field on blur */
+      $(document).on('blur','.combination-form .attribute_wholesale_price,.combination-form .attribute_unity,.combination-form .attribute_priceTE', function(){
+        $(this).val(priceCalculation.normalizePrice($(this).val()));
       });
 
       priceCalculation.taxInclude();

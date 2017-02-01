@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -96,8 +96,8 @@ class ModuleRepository implements ModuleRepositoryInterface
 
     /**
      * Optionnal Doctrine cache provider
-     * 
-     * @var \Doctrine\Common\Cache\CacheProvider 
+     *
+     * @var \Doctrine\Common\Cache\CacheProvider
      */
     private $cacheProvider;
 
@@ -120,7 +120,7 @@ class ModuleRepository implements ModuleRepositoryInterface
         // Cache related variables
         $this->cacheFilePath = $languageISO.'_local_modules';
         $this->cacheProvider = $cacheProvider;
-        
+
         if ($this->cacheProvider && $this->cacheProvider->contains($this->cacheFilePath)) {
             $this->cache = $this->cacheProvider->fetch($this->cacheFilePath);
         }
@@ -523,5 +523,54 @@ class ModuleRepository implements ModuleRepositoryInterface
         }
 
         return $modules;
+    }
+    /*
+     * PROTECTED FUNCTIONS
+     */
+
+    /**
+     * In order to avoid class parsing, we generate a cache file which will keep mandatory data of modules.
+     *
+     * @param string $name The technical module name to find
+     *
+     * @return array Module data stored in file
+     */
+    private function generateCacheFile($data)
+    {
+        if (!$data) {
+            return;
+        }
+        $encoded_data = json_encode($data);
+        file_put_contents($this->cacheFilePath, $encoded_data);
+
+        return $data;
+    }
+
+    /**
+     * We load the file which contains cached data.
+     *
+     * @return array Module data loaded in file
+     */
+    private function readCacheFile()
+    {
+        // JSON file not found ? Generate it
+        if (!file_exists($this->cacheFilePath)) {
+            return array();
+        }
+        $data = json_decode(file_get_contents($this->cacheFilePath), true);
+
+        return ($data == null) ? array() : $data;
+    }
+
+    /**
+     * @return array
+     */
+    public function getInstalledModules()
+    {
+        $filters = new AddonListFilter();
+        $filters->setType(AddonListFilterType::MODULE | AddonListFilterType::SERVICE)
+            ->setStatus(AddonListFilterStatus::INSTALLED);
+
+        return $this->getFilteredList($filters);
     }
 }

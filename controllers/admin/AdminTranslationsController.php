@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,13 +19,12 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
 use PrestaShop\PrestaShop\Core\Cldr\Update;
-use PrestaShop\PrestaShop\Adapter\Configuration as Configurator;
 use PrestaShop\PrestaShop\Core\Addon\Theme\ThemeManagerBuilder;
 use PrestaShop\PrestaShop\Core\Addon\Theme\Theme;
 
@@ -909,8 +908,6 @@ class AdminTranslationsControllerCore extends AdminController
                 Language::loadLanguages();
                 Tools::clearAllCache();
 
-                // TODO: Update AdminTranslationsController::addNewTabs to install tabs translated
-
                 $languageCode = explode('-', Language::getLanguageCodeByIso($isoCode));
                 $cldrUpdate = new Update(_PS_TRANSLATIONS_DIR_);
                 $cldrUpdate->fetchLocale($languageCode[0].'-'.Tools::strtoupper($languageCode[1]));
@@ -957,10 +954,13 @@ class AdminTranslationsControllerCore extends AdminController
                 file_put_contents($file_name, '');
             }
             if (!is_writable($file_name)) {
-                throw new PrestaShopException(sprintf(
-                    Tools::displayError('Cannot write to the theme\'s language file (%s). Please check writing permissions.'),
-                    $file_name
-                ));
+                throw new PrestaShopException(
+                    $this->trans(
+                        'Cannot write to the theme\'s language file (%s). Please check writing permissions.',
+                        array($file_name),
+                        'Admin.International.Notification'
+                    )
+                );
             }
 
             // this string is initialized one time for a file

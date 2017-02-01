@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2017 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,7 +19,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
+ * @copyright 2007-2017 PrestaShop SA
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -818,7 +818,7 @@ class AdminCategoriesControllerCore extends AdminController
                 $this->disable_products = true;
             }
         } elseif ($this->delete_mode != 'delete') {
-            $this->errors[] = Tools::displayError('Unknown delete mode:'.' '.$this->deleted);
+            $this->errors[] = $this->trans('Unknown delete mode: %s', array($this->deleted), 'Admin.Catalog.Notification');
         }
     }
 
@@ -1054,7 +1054,7 @@ class AdminCategoriesControllerCore extends AdminController
                 $errors = array();
                 // Evaluate the memory required to resize the image: if it's too much, you can't resize it.
                 if (isset($file['save_path']) && !ImageManager::checkImageMemoryLimit($file['save_path'])) {
-                    $errors[] = Tools::displayError('Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration settings. ');
+                    $errors[] = $this->trans('Due to memory limit restrictions, this image cannot be loaded. Please increase your memory_limit value via your server\'s configuration settings. ', array(), 'Admin.Notifications.Error');
                 }
                 // Copy new image
                 if (!isset($file['save_path']) || (empty($errors) && !ImageManager::resize($file['save_path'], _PS_CAT_IMG_DIR_
