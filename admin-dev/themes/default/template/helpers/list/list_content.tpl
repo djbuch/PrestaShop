@@ -1,12 +1,12 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,11 +15,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
 {capture name='tr_count'}{counter name='tr_count'}{/capture}
@@ -49,7 +49,11 @@
 					{if isset($params.class)} {$params.class}{/if}
 					{if isset($params.align)} {$params.align}{/if}{/strip}"
 					{if (!isset($params.position) && !$no_link && !isset($params.remove_onclick))}
-						onclick="document.location = '{$current_index|escape:'html':'UTF-8'}&amp;{$identifier|escape:'html':'UTF-8'}={$tr.$identifier|escape:'html':'UTF-8'}{if $view}&amp;view{else}&amp;update{/if}{$table|escape:'html':'UTF-8'}{if $page > 1}&amp;page={$page|intval}{/if}&amp;token={$token|escape:'html':'UTF-8'}'">
+            {if isset($tr.link) }
+              onclick="document.location = '{$tr.link}'">
+            {else}
+              onclick="document.location = '{$current_index|addslashes|escape:'html':'UTF-8'}&amp;{$identifier|escape:'html':'UTF-8'}={$tr.$identifier|escape:'html':'UTF-8'}{if $view}&amp;view{else}&amp;update{/if}{$table|escape:'html':'UTF-8'}{if $page > 1}&amp;page={$page|intval}{/if}&amp;token={$token|escape:'html':'UTF-8'}'">
+            {/if}
 					{else}
 					>
 				{/if}
@@ -65,6 +69,12 @@
 				{if isset($tr.$key)}
 					{if isset($params.active)}
 						{$tr.$key}
+					{elseif isset($params.callback)}
+						{if isset($params.maxlength) && Tools::strlen($tr.$key) > $params.maxlength}
+							<span title="{$tr.$key}">{$tr.$key|truncate:$params.maxlength:'...'}</span>
+						{else}
+							{$tr.$key}
+						{/if}
 					{elseif isset($params.activeVisu)}
 						{if $tr.$key}
 							<i class="icon-check-ok"></i> {l s='Enabled' d='Admin.Global'}
@@ -92,7 +102,11 @@
 							{/if}
 						{/if}
 					{elseif isset($params.type) && $params.type == 'price'}
-						{displayPrice price=$tr.$key}
+						{if isset($tr.id_currency)}
+							{displayPrice price=$tr.$key currency=$tr.id_currency}
+						{else}
+							{displayPrice price=$tr.$key}
+						{/if}
 					{elseif isset($params.float)}
 						{$tr.$key}
 					{elseif isset($params.type) && $params.type == 'date'}
@@ -112,12 +126,6 @@
 					{* If type is 'editable', an input is created *}
 					{elseif isset($params.type) && $params.type == 'editable' && isset($tr.id)}
 						<input type="text" name="{$key}_{$tr.id}" value="{$tr.$key|escape:'html':'UTF-8'}" class="{$key}" />
-					{elseif isset($params.callback)}
-						{if isset($params.maxlength) && Tools::strlen($tr.$key) > $params.maxlength}
-							<span title="{$tr.$key}">{$tr.$key|truncate:$params.maxlength:'...'}</span>
-						{else}
-							{$tr.$key}
-						{/if}
 					{elseif $key == 'color'}
 						{if !is_array($tr.$key)}
 						<div style="background-color: {$tr.$key};" class="attributes-color-container"></div>

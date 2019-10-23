@@ -17,7 +17,7 @@ INSERT INTO `PREFIX_hook_alias` (`name`, `alias`) VALUES
   ('actionSubmitAccountBefore', 'actionBeforeSubmitAccount'),
   ('actionDeleteProductInCartAfter', 'actionAfterDeleteProductInCart');
 
-ALTER TABLE `PREFIX_currency` DROP `iso_code_num` ,DROP `sign` ,DROP `blank` ,DROP `format` ,DROP `decimals` ;
+ALTER TABLE `PREFIX_currency` DROP `iso_code_num` , DROP `sign` , DROP `blank` , DROP `format` , DROP `decimals` ;
 
 /* Password reset token for new "Forgot my password screen */
 ALTER TABLE `PREFIX_customer` ADD `reset_password_token` varchar(40) DEFAULT NULL;
@@ -115,11 +115,22 @@ ALTER TABLE `PREFIX_lang` ADD `locale` varchar(5) COLLATE utf8_unicode_ci NOT NU
 CREATE TABLE `PREFIX_authorization_role` (
   `id_authorization_role` int(10) unsigned NOT NULL auto_increment,
   `slug` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`id_authorization_role`)
+  PRIMARY KEY (`id_authorization_role`),
+  UNIQUE KEY (`slug`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
 
-RENAME TABLE `PREFIX_access` TO `PREFIX_access_old`;
+/* Create a copy without indexes to make ID updates without conflict. */
+CREATE TABLE `PREFIX_access_old` AS SELECT * FROM `PREFIX_access`;
+DROP TABLE `PREFIX_access`;
 RENAME TABLE `PREFIX_module_access` TO `PREFIX_module_access_old`;
+
+CREATE TABLE `PREFIX_tab_transit` (
+  `id_old_tab` int(11),
+  `id_new_tab` int(11),
+  `key` VARCHAR(128) /* class_name and module concatenation */
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+/* Save the old IDs */
+INSERT INTO `PREFIX_tab_transit` (`id_old_tab`, `key`) SELECT `id_tab`, CONCAT(`class_name`, COALESCE(`module`, '')) FROM `PREFIX_tab`;
 
 CREATE TABLE `PREFIX_access` (
   `id_profile` int(10) unsigned NOT NULL,
@@ -132,14 +143,6 @@ CREATE TABLE `PREFIX_module_access` (
   `id_authorization_role` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id_profile`,`id_authorization_role`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
-
-/* Add Payment Preferences tab. SuperAdmin profile is the only one to access it. */
-/* PHP:ps_1700_right_management(); */;
-
-DROP TABLE IF EXISTS `PREFIX_access_old`;
-DROP TABLE IF EXISTS `PREFIX_module_access_old`;
-
-/* PHP:ps_1700_reset_theme(); */;
 
 /* PHP:add_quick_access_tab(); */;
 
@@ -204,3 +207,28 @@ DELETE FROM `PREFIX_configuration` WHERE `name` IN (
 ALTER TABLE `PREFIX_tab` ADD `icon` varchar(32) DEFAULT '';
 
 /* PHP:migrate_tabs_17(); */;
+
+/* Save the new IDs */
+UPDATE `PREFIX_tab_transit` tt SET `id_new_tab` = (
+  SELECT `id_tab` FROM `PREFIX_tab` WHERE CONCAT(`class_name`, COALESCE(`module`, '')) = tt.`key` LIMIT 1
+);
+/* Update default tab IDs for employees */
+UPDATE `PREFIX_employee` e SET `default_tab` = (
+  SELECT IFNULL(`id_new_tab`,
+    /* If the tab does not exist anymore, fallback to the dashboard. */
+    (SELECT `id_tab` FROM `PREFIX_tab` WHERE `class_name` = 'AdminDashboard' AND `module` IS NULL)
+  ) FROM `PREFIX_tab_transit` WHERE `id_old_tab` = e.`default_tab`
+);
+
+/* Update access tab IDs */
+UPDATE `PREFIX_access_old` ao SET `id_tab` = (
+  /* Update tab ID if possible, leave as is if the tab does not exist anymore */
+  SELECT IFNULL(`id_new_tab`, ao.`id_tab`) FROM `PREFIX_tab_transit` WHERE `id_old_tab` = ao.`id_tab`
+);
+
+/* Properly migrate the rights associated with each tabs */
+/* PHP:ps_1700_right_management(); */;
+
+DROP TABLE IF EXISTS `PREFIX_access_old`;
+DROP TABLE IF EXISTS `PREFIX_module_access_old`;
+DROP TABLE IF EXISTS `PREFIX_tab_transit`;

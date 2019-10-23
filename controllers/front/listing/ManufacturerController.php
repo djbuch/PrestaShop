@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,23 +16,23 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
+use PrestaShop\PrestaShop\Adapter\Manufacturer\ManufacturerProductSearchProvider;
 use PrestaShop\PrestaShop\Core\Product\Search\ProductSearchQuery;
 use PrestaShop\PrestaShop\Core\Product\Search\SortOrder;
-use PrestaShop\PrestaShop\Adapter\Manufacturer\ManufacturerProductSearchProvider;
 
 class ManufacturerControllerCore extends ProductListingFrontController
 {
     public $php_self = 'manufacturer';
 
     protected $manufacturer;
-    private $label;
+    protected $label;
 
     public function canonicalRedirection($canonicalURL = '')
     {
@@ -71,13 +71,17 @@ class ManufacturerControllerCore extends ProductListingFrontController
      */
     public function initContent()
     {
-        if (Configuration::get('PS_DISPLAY_SUPPLIERS')) {
+        if (Configuration::get('PS_DISPLAY_MANUFACTURERS')) {
             parent::initContent();
 
             if (Validate::isLoadedObject($this->manufacturer) && $this->manufacturer->active && $this->manufacturer->isAssociatedToShop()) {
                 $this->assignManufacturer();
                 $this->label = $this->trans(
-                    'List of products by brand %s', array($this->manufacturer->name), 'Shop.Theme.Catalog'
+                    'List of products by brand %brand_name%',
+                    array(
+                        '%brand_name%' => $this->manufacturer->name,
+                    ),
+                    'Shop.Theme.Catalog'
                 );
                 $this->doProductSearch(
                     'catalog/listing/manufacturer',
@@ -86,7 +90,9 @@ class ManufacturerControllerCore extends ProductListingFrontController
             } else {
                 $this->assignAll();
                 $this->label = $this->trans(
-                    'List of all brands', array(), 'Shop.Theme.Catalog'
+                    'List of all brands',
+                    array(),
+                    'Shop.Theme.Catalog'
                 );
                 $this->setTemplate('catalog/manufacturers', array('entity' => 'manufacturers'));
             }
@@ -102,7 +108,6 @@ class ManufacturerControllerCore extends ProductListingFrontController
         $query
             ->setIdManufacturer($this->manufacturer->id)
             ->setSortOrder(new SortOrder('product', Tools::getProductsOrder('by'), Tools::getProductsOrder('way')));
-        ;
 
         return $query;
     }
@@ -120,8 +125,24 @@ class ManufacturerControllerCore extends ProductListingFrontController
      */
     protected function assignManufacturer()
     {
+        $manufacturerVar = $this->objectPresenter->present($this->manufacturer);
+
+        $filteredManufacturer = Hook::exec(
+            'filterManufacturerContent',
+            array('filtered_content' => $manufacturerVar['description']),
+            $id_module = null,
+            $array_return = false,
+            $check_exceptions = true,
+            $use_push = false,
+            $id_shop = null,
+            $chain = true
+        );
+        if (!empty($filteredManufacturer)) {
+            $manufacturerVar['description'] = $filteredManufacturer;
+        }
+
         $this->context->smarty->assign(array(
-            'manufacturer' => $this->objectPresenter->present($this->manufacturer),
+            'manufacturer' => $manufacturerVar,
         ));
     }
 
@@ -130,8 +151,28 @@ class ManufacturerControllerCore extends ProductListingFrontController
      */
     protected function assignAll()
     {
+        $manufacturersVar = $this->getTemplateVarManufacturers();
+
+        if (!empty($manufacturersVar)) {
+            foreach ($manufacturersVar as $k => $manufacturer) {
+                $filteredManufacturer = Hook::exec(
+                    'filterManufacturerContent',
+                    array('filtered_content' => $manufacturer['text']),
+                    $id_module = null,
+                    $array_return = false,
+                    $check_exceptions = true,
+                    $use_push = false,
+                    $id_shop = null,
+                    $chain = true
+                );
+                if (!empty($filteredManufacturer)) {
+                    $manufacturersVar[$k]['text'] = $filteredManufacturer;
+                }
+            }
+        }
+
         $this->context->smarty->assign(array(
-            'brands' => $this->getTemplateVarManufacturers(),
+            'brands' => $manufacturersVar,
         ));
     }
 
@@ -145,7 +186,7 @@ class ManufacturerControllerCore extends ProductListingFrontController
             $manufacturers_for_display[$manufacturer['id_manufacturer']]['text'] = $manufacturer['short_description'];
             $manufacturers_for_display[$manufacturer['id_manufacturer']]['image'] = $this->context->link->getManufacturerImageLink($manufacturer['id_manufacturer'], 'small_default');
             $manufacturers_for_display[$manufacturer['id_manufacturer']]['url'] = $this->context->link->getmanufacturerLink($manufacturer['id_manufacturer']);
-            $manufacturers_for_display[$manufacturer['id_manufacturer']]['nb_products'] = $manufacturer['nb_products'] > 1 ? ($this->trans('%number% products', array('%number%' => $manufacturer['nb_products']), 'Shop.Theme.Catalog')) : sprintf($this->trans('%number% product', array('%number%' => $manufacturer['nb_products']), 'Shop.Theme.Catalog'));
+            $manufacturers_for_display[$manufacturer['id_manufacturer']]['nb_products'] = $manufacturer['nb_products'] > 1 ? ($this->trans('%number% products', array('%number%' => $manufacturer['nb_products']), 'Shop.Theme.Catalog')) : $this->trans('%number% product', array('%number%' => $manufacturer['nb_products']), 'Shop.Theme.Catalog');
         }
 
         return $manufacturers_for_display;
@@ -154,5 +195,23 @@ class ManufacturerControllerCore extends ProductListingFrontController
     public function getListingLabel()
     {
         return $this->label;
+    }
+
+    public function getBreadcrumbLinks()
+    {
+        $breadcrumb = parent::getBreadcrumbLinks();
+        $breadcrumb['links'][] = [
+            'title' => $this->getTranslator()->trans('Brands', [], 'Shop.Theme.Global'),
+            'url' => $this->context->link->getPageLink('manufacturer', true),
+        ];
+
+        if (Validate::isLoadedObject($this->manufacturer) && $this->manufacturer->active && $this->manufacturer->isAssociatedToShop()) {
+            $breadcrumb['links'][] = [
+                'title' => $this->manufacturer->name,
+                'url' => $this->context->link->getManufacturerLink($this->manufacturer),
+            ];
+        }
+
+        return $breadcrumb;
     }
 }

@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,27 +16,31 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
-
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use PrestaShop\PrestaShop\Core\Localization\CLDR\ComputingPrecision;
+use PrestaShop\PrestaShop\Core\Localization\Locale;
+use PrestaShopBundle\Translation\Loader\SqlTranslationLoader;
+use PrestaShopBundle\Translation\TranslatorComponent as Translator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Translation\Loader\XliffFileLoader;
-use PrestaShopBundle\Translation\TranslatorComponent as Translator;
-use PrestaShopBundle\Translation\Loader\SqlTranslationLoader;
 
 /**
- * Class ContextCore
+ * Class ContextCore.
  *
  * @since 1.5.0.1
  */
 class ContextCore
 {
-    /* @var Context */
+    /** @var Context */
     protected static $instance;
 
     /** @var Cart */
@@ -69,6 +73,13 @@ class ContextCore
     /** @var Currency */
     public $currency;
 
+    /**
+     * Current locale instance.
+     *
+     * @var Locale
+     */
+    public $currentLocale;
+
     /** @var Tab */
     public $tab;
 
@@ -84,11 +95,17 @@ class ContextCore
     /** @var int */
     public $mode;
 
+    /** @var ContainerBuilder */
+    public $container;
+
     /** @var Translator */
-    protected $translator;
+    protected $translator = null;
+
+    /** @var int */
+    protected $priceComputingPrecision = null;
 
     /**
-     * Mobile device of the customer
+     * Mobile device of the customer.
      *
      * @var bool|null
      */
@@ -122,21 +139,21 @@ class ContextCore
     const MODE_HOST = 8;
 
     /**
-     * Sets Mobile_Detect tool object
+     * Sets Mobile_Detect tool object.
      *
-     * @return \Mobile_Detect
+     * @return Mobile_Detect
      */
     public function getMobileDetect()
     {
         if ($this->mobile_detect === null) {
-            $this->mobile_detect = new \Mobile_Detect();
+            $this->mobile_detect = new Mobile_Detect();
         }
 
         return $this->mobile_detect;
     }
 
     /**
-     * Checks if visitor's device is a mobile device
+     * Checks if visitor's device is a mobile device.
      *
      * @return bool
      */
@@ -151,7 +168,7 @@ class ContextCore
     }
 
     /**
-     * Checks if visitor's device is a tablet device
+     * Checks if visitor's device is a tablet device.
      *
      * @return bool
      */
@@ -166,7 +183,7 @@ class ContextCore
     }
 
     /**
-     * Sets mobile_device context variable
+     * Sets mobile_device context variable.
      *
      * @return bool
      */
@@ -183,16 +200,19 @@ class ContextCore
                             if ($this->isMobile() && !$this->isTablet()) {
                                 $this->mobile_device = true;
                             }
+
                             break;
                         case 2: // Only for touchpads
                             if ($this->isTablet() && !$this->isMobile()) {
                                 $this->mobile_device = true;
                             }
+
                             break;
                         case 3: // For touchpad or mobile devices
                             if ($this->isMobile() || $this->isTablet()) {
                                 $this->mobile_device = true;
                             }
+
                             break;
                     }
                 }
@@ -203,7 +223,7 @@ class ContextCore
     }
 
     /**
-     * Returns mobile device type
+     * Returns mobile device type.
      *
      * @return int
      */
@@ -225,9 +245,18 @@ class ContextCore
     }
 
     /**
-     * Checks if mobile context is possible
+     * @return Locale
+     */
+    public function getCurrentLocale()
+    {
+        return $this->currentLocale;
+    }
+
+    /**
+     * Checks if mobile context is possible.
      *
      * @return bool
+     *
      * @throws PrestaShopException
      */
     protected function checkMobileContext()
@@ -249,15 +278,14 @@ class ContextCore
             }
         }
 
-        return isset($_SERVER['HTTP_USER_AGENT'])
-            && isset(Context::getContext()->cookie)
+        return isset($_SERVER['HTTP_USER_AGENT'], Context::getContext()->cookie)
             && (bool) Configuration::get('PS_ALLOW_MOBILE_DEVICE')
             && @filemtime(_PS_THEME_MOBILE_DIR_)
             && !Context::getContext()->cookie->no_mobile;
     }
 
     /**
-     * Get a singleton instance of Context object
+     * Get a singleton instance of Context object.
      *
      * @return Context
      */
@@ -280,7 +308,7 @@ class ContextCore
     }
 
     /**
-     * Unit testing purpose only
+     * Unit testing purpose only.
      */
     public static function deleteTestingInstance()
     {
@@ -288,17 +316,18 @@ class ContextCore
     }
 
     /**
-     * Clone current context object
+     * Clone current context object.
      *
      * @return Context
      */
     public function cloneContext()
     {
-        return clone($this);
+        return clone $this;
     }
 
     /**
-     * Update context after customer login
+     * Update context after customer login.
+     *
      * @param Customer $customer Created customer
      */
     public function updateCustomer(Customer $customer)
@@ -311,22 +340,24 @@ class ContextCore
         $this->cookie->logged = 1;
         $customer->logged = 1;
         $this->cookie->email = $customer->email;
-        $this->cookie->is_guest =  $customer->isGuest();
-        $this->cart->secure_key = $customer->secure_key;
+        $this->cookie->is_guest = $customer->isGuest();
 
         if (Configuration::get('PS_CART_FOLLOWING') && (empty($this->cookie->id_cart) || Cart::getNbProducts($this->cookie->id_cart) == 0) && $idCart = (int) Cart::lastNoneOrderedCart($this->customer->id)) {
             $this->cart = new Cart($idCart);
+            $this->cart->secure_key = $customer->secure_key;
         } else {
             $idCarrier = (int) $this->cart->id_carrier;
+            $this->cart->secure_key = $customer->secure_key;
             $this->cart->id_carrier = 0;
             $this->cart->setDeliveryOption(null);
+            $this->cart->updateAddressId($this->cart->id_address_delivery, (int) Address::getFirstCustomerAddressId((int) ($customer->id)));
             $this->cart->id_address_delivery = (int) Address::getFirstCustomerAddressId((int) ($customer->id));
             $this->cart->id_address_invoice = (int) Address::getFirstCustomerAddressId((int) ($customer->id));
         }
         $this->cart->id_customer = (int) $customer->id;
 
         if (isset($idCarrier) && $idCarrier) {
-            $deliveryOption = [$this->cart->id_address_delivery => $idCarrier.','];
+            $deliveryOption = [$this->cart->id_address_delivery => $idCarrier . ','];
             $this->cart->setDeliveryOption($deliveryOption);
         }
 
@@ -337,41 +368,92 @@ class ContextCore
     }
 
     /**
+     * Returns a translator depending on service container availability and if the method
+     * is called by the installer or not.
+     *
+     * @param bool $isInstaller Set to true if the method is called by the installer
      *
      * @return Translator
      */
-    public function getTranslator()
+    public function getTranslator($isInstaller = false)
     {
-        if (null === $this->translator) {
-            $this->translator = new Translator($this->language->locale, null, _PS_CACHE_DIR_, false);
-            $this->translator->addLoader('xlf', new XliffFileLoader());
+        if (null !== $this->translator) {
+            return $this->translator;
+        }
 
-            $sqlTranslationLoader = new SqlTranslationLoader();
-            if (!is_null($this->shop)) {
-                $sqlTranslationLoader->setTheme($this->shop->theme);
-            }
+        $sfContainer = SymfonyContainer::getInstance();
 
-            $this->translator->addLoader('db', $sqlTranslationLoader);
-
-            $finder = Finder::create()
-                ->files()
-                ->filter(function (\SplFileInfo $file) {
-                    return 2 === substr_count($file->getBasename(), '.') && preg_match('/\.\w+$/', $file->getBasename());
-                })
-                ->in($this->getTranslationResourcesDirectories())
-            ;
-
-            foreach ($finder as $file) {
-                list($domain, $locale, $format) = explode('.', $file->getBasename(), 3);
-
-                $this->translator->addResource($format, $file, $locale, $domain);
-                if (!is_a($this->language, 'PrestashopBundle\Install\Language')) {
-                    $this->translator->addResource('db', $domain.'.'.$locale.'.db', $locale, $domain);
-                }
-            }
+        if ($isInstaller || null === $sfContainer) {
+            // symfony's container isn't available in front office, so we load and configure the translator component
+            $this->translator = $this->getTranslatorFromLocale($this->language->locale);
+        } else {
+            $this->translator = $sfContainer->get('translator');
+            // We need to set the locale here because in legacy BO pages, the translator is used
+            // before the TranslatorListener does its job of setting the locale according to the Request object
+            $this->translator->setLocale($this->language->locale);
         }
 
         return $this->translator;
+    }
+
+    /**
+     * Returns a new instance of Translator for the provided locale code.
+     *
+     * @param string $locale IETF language tag (eg. "en-US")
+     *
+     * @return Translator
+     */
+    public function getTranslatorFromLocale($locale)
+    {
+        $cacheDir = _PS_CACHE_DIR_ . 'translations';
+        $translator = new Translator($locale, null, $cacheDir, false);
+
+        // In case we have at least 1 translated message, we return the current translator.
+        // If some translations are missing, clear cache
+        if ($locale === '' || count($translator->getCatalogue($locale)->all())) {
+            $this->translator = $translator;
+
+            return $translator;
+        }
+
+        // However, in some case, even empty catalog were stored in the cache and then used as-is.
+        // For this one, we drop the cache and try to regenerate it.
+        if (is_dir($cacheDir)) {
+            $cache_file = Finder::create()
+                ->files()
+                ->in($cacheDir)
+                ->depth('==0')
+                ->name('*.' . $locale . '.*');
+            (new Filesystem())->remove($cache_file);
+        }
+
+        $adminContext = defined('_PS_ADMIN_DIR_');
+        $translator->addLoader('xlf', new XliffFileLoader());
+
+        $sqlTranslationLoader = new SqlTranslationLoader();
+        if (null !== $this->shop) {
+            $sqlTranslationLoader->setTheme($this->shop->theme);
+        }
+
+        $translator->addLoader('db', $sqlTranslationLoader);
+        $notName = $adminContext ? '^Shop*' : '^Admin*';
+
+        $finder = Finder::create()
+            ->files()
+            ->name('*.' . $locale . '.xlf')
+            ->notName($notName)
+            ->in($this->getTranslationResourcesDirectories());
+
+        foreach ($finder as $file) {
+            list($domain, $locale, $format) = explode('.', $file->getBasename(), 3);
+
+            $translator->addResource($format, $file, $locale, $domain);
+            if (!$this->language instanceof PrestashopBundle\Install\Language) {
+                $translator->addResource('db', $domain . '.' . $locale . '.db', $locale, $domain);
+            }
+        }
+
+        return $translator;
     }
 
     /**
@@ -381,7 +463,7 @@ class ContextCore
     {
         $locations = array(_PS_ROOT_DIR_ . '/app/Resources/translations');
 
-        if (!is_null($this->shop)) {
+        if (null !== $this->shop) {
             $activeThemeLocation = _PS_ROOT_DIR_ . '/themes/' . $this->shop->theme_name . '/translations';
             if (is_dir($activeThemeLocation)) {
                 $locations[] = $activeThemeLocation;
@@ -389,5 +471,20 @@ class ContextCore
         }
 
         return $locations;
+    }
+
+    /**
+     * Returns the computing precision according to the current currency
+     *
+     * @return int
+     */
+    public function getComputingPrecision()
+    {
+        if ($this->priceComputingPrecision === null) {
+            $computingPrecision = new ComputingPrecision();
+            $this->priceComputingPrecision = $computingPrecision->getPrecision($this->currency->precision);
+        }
+
+        return $this->priceComputingPrecision;
     }
 }

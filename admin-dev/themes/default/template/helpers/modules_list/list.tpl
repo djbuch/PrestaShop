@@ -1,12 +1,12 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,14 +15,14 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
-<div class="panel">
+<div class="panel" {if isset($panel_id)}id="{$panel_id}"{/if}>
 	<h3>
 		<i class="icon-list-ul"></i>
 		{if isset($panel_title)}{$panel_title|escape:'html':'UTF-8'}{else}{l s='Modules list'}{/if}
@@ -40,7 +40,7 @@
 				{if $controller_name == 'AdminPayment' && isset($view_all)}
 					<div class="panel-footer">
 						<div class="col-lg-4 col-lg-offset-4">
-							<a class="btn btn-default btn-block" href="index.php?tab=AdminModules&amp;token={getAdminToken tab='AdminModules'}&amp;filterCategory=payments_gateways">
+							<a class="btn btn-default btn-block" href="{$link->getAdminLink('AdminModulesSf', true, ['filterCategoryTab' => 'payments_gateways'])|escape:'html':'UTF-8'}">
 								<i class="process-icon-payment"></i>
 								{l s='View all available payments solutions'}
 							</a>

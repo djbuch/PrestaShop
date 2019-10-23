@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,21 +16,21 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
 namespace PrestaShopBundle\Controller\Admin;
 
-use Doctrine\Common\Util\Inflector;
-use PrestashopBundle\Entity\Translation;
+use PrestaShop\PrestaShop\Core\Language\Copier\LanguageCopierConfig;
+use PrestaShopBundle\Security\Annotation\AdminSecurity;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
@@ -39,109 +39,31 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
  */
 class TranslationsController extends FrameworkBundleAdminController
 {
+    protected $layoutTitle = 'Translations';
+
+    const CONTROLLER_NAME = 'ADMINTRANSLATIONS';
+
     /**
-     * List translations keys and corresponding editable values.
-     *
-     * @Template
-     *
-     * @param Request $request
-     *
-     * @return array Template vars
+     * @deprecated
      */
-    public function listAction(Request $request)
-    {
-        if (!$request->isMethod('POST')) {
-            return $this->redirect('/admin-dev/index.php?controller=AdminTranslations');
-        }
-
-        $catalogue = $this->getTranslationsCatalogue($request);
-        $translationsTree = $this->makeTranslationsTree($catalogue);
-
-        return array(
-            'translationsTree' => $translationsTree,
-            'theme' => $this->getSelectedTheme($request),
-            'requestParams' => array(
-                'lang' => $request->get('lang'),
-                'type' => $request->get('type'),
-                'theme' => $request->get('selected-theme'),
-            ),
-            'total_remaining_translations' => $this->get('translator')->trans(
-                '%nb_translations% missing',
-                array('%nb_translations%' => '%d'),
-                'Admin.International.Feature'
-            ),
-            'total_translations' => $this->get('translator')->trans(
-                '%d expressions',
-                array(),
-                'Admin.International.Feature'
-            )
-        );
-    }
+    const controller_name = self::CONTROLLER_NAME;
 
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @Template("@PrestaShop/Admin/Translations/overview.html.twig")
      */
-    public function messagesFragmentsAction(Request $request)
+    public function overviewAction()
     {
-        $theme = $this->getSelectedTheme($request);
-        $catalogue = $this->getTranslationsCatalogue($request);
-        $translationsTree = $this->makeTranslationsTree($catalogue);
-
-        $translationsFormsView = $this->renderView(
-            'PrestaShopBundle:Admin/Translations/include:translations-forms.html.twig',
-            array(
-                'translationsTree' => $translationsTree,
-                'theme' => $theme,
-            )
-        );
-        $translationsTreeView = $this->renderView(
-            'PrestaShopBundle:Admin/Translations/include:translations-tree.html.twig',
-            array(
-                'translationsTree' => $translationsTree,
-                'theme' => $theme,
-            )
-        );
-
-        return new JsonResponse(array(
-            'translations_forms' => $translationsFormsView,
-            'translations_tree' => $translationsTreeView,
-        ));
-    }
-
-    private function getSelectedTheme(Request $request)
-    {
-        if ($request->get('type') === 'themes') {
-            return $request->get('selected-theme');
-        } else {
-            return null;
-        }
+        return parent::overviewAction();
     }
 
     /**
-     * Edit a translation value.
+     * Extract theme using locale and theme name.
+     *
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
      *
      * @param Request $request
      *
-     * @return JsonResponse
-     */
-    public function editAction(Request $request)
-    {
-        $updatedTranslationSuccessfully = $this->saveTranslationMessage($request);
-        $this->clearCache();
-
-        return new JsonResponse(array(
-            'successful_update' => $updatedTranslationSuccessfully,
-            'translation_value' => $request->request->get('translation_value'),
-        ));
-    }
-
-    /**
-     * extract theme using locale and theme name.
-     *
-     * @param Request $request
-     *
-     * @return file to be downloaded
+     * @return BinaryFileResponse
      */
     public function exportThemeAction(Request $request)
     {
@@ -152,7 +74,7 @@ class TranslationsController extends FrameworkBundleAdminController
         $locale = $langRepository->getLocaleByIsoCode($isoCode);
 
         $themeExporter = $this->get('prestashop.translation.theme.exporter');
-        $zipFile = $themeExporter->createZipArchive($themeName, $locale);
+        $zipFile = $themeExporter->createZipArchive($themeName, $locale, _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR);
 
         $response = new BinaryFileResponse($zipFile);
         $response->deleteFileAfterSend(true);
@@ -163,268 +85,164 @@ class TranslationsController extends FrameworkBundleAdminController
     }
 
     /**
+     * Show translations settings page.
+     *
+     * @Template("@PrestaShop/Admin/Improve/International/Translations/translations_settings.html.twig")
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller'))")
+     *
      * @param Request $request
      *
-     * @return bool
+     * @return array
      */
-    protected function saveTranslationMessage(Request $request)
+    public function showSettingsAction(Request $request)
     {
-        $requestParams = $request->request->all();
-        $entityManager = $this->getDoctrine()->getManager();
+        $legacyController = $request->attributes->get('_legacy_controller');
+        $legacyContext = $this->get('prestashop.adapter.legacy.context');
+        $kpiRowFactory = $this->get('prestashop.core.kpi_row.factory.translations_page');
+        $formHandler = $this->get('prestashop.admin.translations_settings.form_handler');
+        $form = $formHandler->getForm();
 
-        $lang = $this->findLanguageByLocale($requestParams['locale']);
-
-        /**
-         * @var \PrestaShopBundle\Entity\Translation $translation
-         */
-        $translation = $entityManager->getRepository('PrestaShopBundle:Translation')
-            ->findOneBy(array(
-                'lang' => $lang,
-                'domain' => $requestParams['domain'],
-                'key' => $requestParams['translation_key'],
-                'theme' => $requestParams['theme']
-            ));
-
-        $theme = $requestParams['theme'];
-        if (empty($requestParams['theme'])) {
-            $theme = null;
-        }
-
-        if (is_null($translation)) {
-            $translation = new Translation();
-            $translation->setDomain($requestParams['domain']);
-            $translation->setLang($lang);
-            $translation->setKey(htmlspecialchars_decode($requestParams['translation_key'], ENT_QUOTES));
-            $translation->setTranslation($requestParams['translation_value']);
-            $translation->setTheme($theme);
-        } else {
-            $translation->setTheme($theme);
-            $translation->setTranslation($requestParams['translation_value']);
-        }
-
-        $updatedTranslationSuccessfully = false;
-
-        try {
-            $entityManager->persist($translation);
-            $entityManager->flush();
-
-            $updatedTranslationSuccessfully = true;
-        } catch (\Exception $exception) {
-            $this->container->get('logger')->error($exception->getMessage());
-        }
-
-        return $updatedTranslationSuccessfully;
+        return [
+            'layoutTitle' => $this->trans('Translations', 'Admin.Navigation.Menu'),
+            'enableSidebar' => true,
+            'help_link' => $this->generateSidebarLink($legacyController),
+            'kpiRow' => $kpiRowFactory->build(),
+            'translationSettingsForm' => $form->createView(),
+            'addLanguageUrl' => $legacyContext->getAdminLink('AdminLanguages', true, ['addlang' => '']),
+        ];
     }
 
     /**
-     * @see \Symfony\Bundle\FrameworkBundle\Command\CacheClearCommand
-     */
-    protected function clearCache()
-    {
-        $cacheRefresh = $this->container->get('prestashop.cache.refresh');
-
-        try {
-            $cacheRefresh->execute();
-        } catch (\Exception $exception) {
-            $this->container->get('logger')->error($exception->getMessage());
-        }
-    }
-
-    /**
-     * @param $locale
+     * Modify translations action.
      *
-     * @return mixed
-     */
-    protected function findLanguageByLocale($locale)
-    {
-        return $this->getDoctrine()->getManager()
-            ->getRepository('PrestaShopBundle:Lang')->findOneByLocale($locale);
-    }
-
-    /**
+     * @AdminSecurity("is_granted('read', request.get('_legacy_controller')~'_')")
+     *
      * @param Request $request
      *
-     * @return \Symfony\Component\Translation\MessageCatalogue
-     *
-     * @throws \Exception
+     * @return RedirectResponse
      */
-    protected function getTranslationsCatalogue(Request $request)
+    public function modifyTranslationsAction(Request $request)
     {
-        $lang = $request->get('lang');
-        $type = $request->get('type');
-        $theme = $request->get('selected-theme');
+        $routeFinder = $this->get('prestashop.adapter.translation_route_finder');
+        $route = $routeFinder->findRoute($request->query);
+        $routeParameters = $routeFinder->findRouteParameters($request->query);
 
-        $factory = $this->get('ps.translations_factory');
-        if ($theme !== 'classic' && $this->requiresThemeTranslationsFactory($theme, $type)) {
-            $factory = $this->get('ps.theme_translations_factory');
+        // If route parameters are empty we are redirecting to a legacy route
+        return empty($routeParameters) ? $this->redirect($route) : $this->redirectToRoute($route, $routeParameters);
+    }
+
+    /**
+     * Add language pack for new languages and updates for the existing ones action.
+     *
+     * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')"))
+     *
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    public function addUpdateLanguageAction(Request $request)
+    {
+        $formHandler = $this->get('prestashop.admin.translations_settings.form_handler');
+        $addUpdateLanguageForm = $formHandler->getForm();
+        $addUpdateLanguageForm->handleRequest($request);
+
+        if ($addUpdateLanguageForm->isSubmitted()) {
+            $data = $addUpdateLanguageForm->getData();
+            $isoCode = $data['add_update_language']['iso_localization_pack'];
+
+            $languagePackImporter = $this->get('prestashop.adapter.language.pack.importer');
+            $errors = $languagePackImporter->import($isoCode);
+
+            if (empty($errors)) {
+                $this->addFlash(
+                    'success',
+                    $this->trans('The translations have been successfully added.', 'Admin.International.Notification')
+                );
+
+                return $this->redirectToRoute('admin_international_translations_show_settings');
+            }
+
+            foreach ($errors as $error) {
+                $this->addFlash('error', $error);
+            }
         }
 
-        $locale = $this->langToLocale($lang);
+        return $this->redirectToRoute('admin_international_translations_show_settings');
+    }
 
-        if ($this->requiresThemeTranslationsFactory($theme, $type)) {
-            if ('classic' === $theme) {
-                $type = 'front';
+    /**
+     * Extract theme using locale and theme name.
+     *
+     * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')")
+     *
+     * @param Request $request
+     *
+     * @return BinaryFileResponse|RedirectResponse
+     */
+    public function exportThemeLanguageAction(Request $request)
+    {
+        $formHandler = $this->get('prestashop.admin.translations_settings.form_handler');
+        $exportThemeLanguageForm = $formHandler->getForm();
+        $exportThemeLanguageForm->handleRequest($request);
+
+        if ($exportThemeLanguageForm->isSubmitted()) {
+            $data = $exportThemeLanguageForm->getData();
+
+            $themeName = $data['export_language']['theme_name'];
+            $isoCode = $data['export_language']['iso_code'];
+
+            $langRepository = $this->get('prestashop.core.admin.lang.repository');
+            $locale = $langRepository->getLocaleByIsoCode($isoCode);
+
+            $themeExporter = $this->get('prestashop.translation.theme.exporter');
+            $zipFile = $themeExporter->createZipArchive($themeName, $locale, _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR);
+
+            $response = new BinaryFileResponse($zipFile);
+            $response->deleteFileAfterSend(true);
+
+            $themeExporter->cleanArtifacts($themeName);
+
+            return $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+        }
+
+        return $this->redirectToRoute('admin_international_translations_show_settings');
+    }
+
+    /**
+     * Copy language action.
+     *
+     * @AdminSecurity("is_granted('create', request.get('_legacy_controller')~'_')")
+     *
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    public function copyLanguageAction(Request $request)
+    {
+        $formHandler = $this->get('prestashop.admin.translations_settings.form_handler');
+        $form = $formHandler->getForm();
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted()) {
+            $languageCopier = $this->get('prestashop.adapter.language.copier');
+            $data = $form->getData();
+            $languageCopierConfig = new LanguageCopierConfig(
+                $data['copy_language']['from_theme'],
+                $data['copy_language']['from_language'],
+                $data['copy_language']['to_theme'],
+                $data['copy_language']['to_language']
+            );
+
+            if ($errors = $languageCopier->copy($languageCopierConfig)) {
+                $this->flashErrors($errors);
             } else {
-                $type = $theme;
+                $this->addFlash(
+                    'success',
+                    $this->trans('The translation was successfully copied.', 'Admin.International.Notification')
+                );
             }
         }
 
-        return $factory->createTranslationsArray($type, $locale);
-    }
-
-    /**
-     * @param $theme
-     * @param $type
-     * @return bool
-     */
-    private function requiresThemeTranslationsFactory($theme, $type)
-    {
-        return $type === 'themes' && !is_null($theme);
-    }
-
-    /**
-     * @param $catalogue
-     *
-     * @return array
-     */
-    protected function makeTranslationsTree(array $catalogue)
-    {
-        $translationsTree = array();
-        $flippedUnbreakableWords = array_flip($this->getUnbreakableWords());
-
-        foreach ($catalogue as $domain => $messages) {
-            $unbreakableDomain = $this->makeDomainUnbreakable($domain);
-
-            $tableisedDomain = Inflector::tableize($unbreakableDomain);
-            list($basename) = explode('.', $tableisedDomain);
-            $parts = array_reverse(explode('_', $basename));
-
-            $totalParts = count($parts);
-            $subtree = &$translationsTree;
-
-            if ($totalParts - 2 < 0) {
-                $totalParts = 2;
-                $parts = array($parts[0], 'Admin');
-            }
-
-            $firstDomainPart = $parts[count($parts) - 1];
-
-            $condition = count($parts) > $totalParts - 2;
-            $depth = 0;
-
-            while ($condition) {
-                if ($depth === 1) {
-                    list($subdomain) = explode('.', str_replace(ucfirst($firstDomainPart), '', $domain));
-                    array_pop($parts);
-                } else {
-                    $subdomain = ucfirst(array_pop($parts));
-                    if (array_key_exists($subdomain, $flippedUnbreakableWords)) {
-                        $subdomain = $flippedUnbreakableWords[$subdomain];
-                    }
-                }
-
-                if (!array_key_exists($subdomain, $subtree)) {
-                    $subtree[$subdomain] = array();
-                }
-                $subtree = &$subtree[$subdomain];
-
-                $condition = count($parts) > $totalParts - 2;
-                $depth++;
-
-                if ($depth === 2) {
-                    $subtree['__fixed_length_id'] = '_' . sha1($domain);
-                    list($subtree['__domain']) = explode('.', $domain);
-
-                    $subtree['__metadata'] = $messages['__metadata'];
-                    $subtree['__metadata']['domain'] = $subtree['__domain'];
-                    unset($messages['__metadata']);
-                }
-            }
-
-            $subtree['__messages'] = array($domain => $messages);
-            unset($catalogue[$domain]);
-        }
-
-        return $translationsTree;
-    }
-
-    /**
-     * There are domains containing multiple words,
-     * hence these domains should not be split from those words in camelcase.
-     * The latter are replaced from a list of unbreakable words.
-     *
-     * @param $domain
-     *
-     * @return string
-     */
-    protected function makeDomainUnbreakable($domain)
-    {
-        $adjustedDomain = $domain;
-        $unbreakableWords = $this->getUnbreakableWords();
-
-        foreach ($unbreakableWords as $search => $replacement) {
-            if (false !== strpos($domain, $search)) {
-                $adjustedDomain = str_replace($search, $replacement, $domain);
-
-                break;
-            }
-        }
-
-        return $adjustedDomain;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getUnbreakableWords()
-    {
-        return array(
-            'BankWire' => 'Bankwire',
-            'BlockBestSellers' => 'Blockbestsellers',
-            'BlockCart' => 'Blockcart',
-            'CheckPayment' => 'Checkpayment',
-            'ContactInfo' => 'Contactinfo',
-            'EmailSubscription' => 'Emailsubscription',
-            'FacetedSearch' => 'Facetedsearch',
-            'FeaturedProducts' => 'Featuredproducts',
-            'LegalCompliance' => 'Legalcompliance',
-            'ShareButtons' => 'Sharebuttons',
-            'ShoppingCart' => 'Shoppingcart',
-            'SocialFollow' => 'Socialfollow',
-            'WirePayment' => 'Wirepayment',
-            'BlockAdvertising' => 'Blockadvertising',
-            'CategoryTree' => 'Categorytree',
-            'CustomerSignIn' => 'Customersignin',
-            'CustomText' => 'Customtext',
-            'ImageSlider' => 'Imageslider',
-            'LinkList' => 'Linklist',
-            'ShopPDF' => 'ShopPdf',
-        );
-    }
-
-    /**
-     * @param $locale
-     * @param $theme
-     * @return array
-     */
-    protected function getTranslationsInDatabase($locale, $theme = null)
-    {
-        $translationRepository = $this->get('prestashop.core.admin.translation.repository');
-        $translations = $translationRepository->findByLanguageAndTheme(
-            $this->findLanguageByLocale($locale),
-            $theme
-        );
-
-        $translationsMap = array();
-        array_map(function ($translation) use (&$translationsMap, $locale) {
-            $domainLocale = $translation->getDomain().'.'.$locale;
-            if (!array_key_exists($domainLocale, $translationsMap)) {
-                $translationsMap[$domainLocale] = array();
-            }
-
-            $translationsMap[$domainLocale][$translation->getKey()] = $translation->getTranslation();
-        }, $translations);
-
-        return $translationsMap;
+        return $this->redirectToRoute('admin_international_translations_show_settings');
     }
 }

@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,21 +16,21 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
-
 namespace PrestaShopBundle\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * ModuleHistory
+ * ModuleHistory.
  *
  * @ORM\Table
  * @ORM\Entity
@@ -39,23 +39,23 @@ use Doctrine\ORM\Mapping as ORM;
 class ModuleHistory
 {
     /**
-     * @var integer
+     * @var int
      *
-     * @ORM\Column(name="id", type="integer")
      * @ORM\Id
+     * @ORM\Column(name="id", type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id_employee", type="integer")
      */
     private $idEmployee;
 
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id_module", type="integer")
      */
@@ -75,11 +75,10 @@ class ModuleHistory
      */
     private $dateUpd;
 
-
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -87,9 +86,9 @@ class ModuleHistory
     }
 
     /**
-     * Set idEmployee
+     * Set idEmployee.
      *
-     * @param integer $idEmployee
+     * @param int $idEmployee
      *
      * @return ModuleHistory
      */
@@ -101,9 +100,9 @@ class ModuleHistory
     }
 
     /**
-     * Get idEmployee
+     * Get idEmployee.
      *
-     * @return integer
+     * @return int
      */
     public function getIdEmployee()
     {
@@ -111,9 +110,9 @@ class ModuleHistory
     }
 
     /**
-     * Set idModule
+     * Set idModule.
      *
-     * @param integer $idModule
+     * @param int $idModule
      *
      * @return ModuleHistory
      */
@@ -125,9 +124,9 @@ class ModuleHistory
     }
 
     /**
-     * Get idModule
+     * Get idModule.
      *
-     * @return integer
+     * @return int
      */
     public function getIdModule()
     {
@@ -135,7 +134,7 @@ class ModuleHistory
     }
 
     /**
-     * Set dateAdd
+     * Set dateAdd.
      *
      * @param \DateTime $dateAdd
      *
@@ -149,7 +148,7 @@ class ModuleHistory
     }
 
     /**
-     * Get dateAdd
+     * Get dateAdd.
      *
      * @return \DateTime
      */
@@ -159,7 +158,7 @@ class ModuleHistory
     }
 
     /**
-     * Set dateUpd
+     * Set dateUpd.
      *
      * @param \DateTime $dateUpd
      *
@@ -173,7 +172,7 @@ class ModuleHistory
     }
 
     /**
-     * Get dateUpd
+     * Get dateUpd.
      *
      * @return \DateTime
      */
@@ -190,10 +189,10 @@ class ModuleHistory
      */
     public function updatedTimestamps()
     {
-        $this->setDateUpd(new \DateTime(date('Y-m-d H:i:s')));
+        $this->setDateUpd(new DateTime());
 
         if ($this->getDateAdd() == null) {
-            $this->setDateAdd(new \DateTime(date('Y-m-d H:i:s')));
+            $this->setDateAdd(new DateTime());
         }
     }
 }

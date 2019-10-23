@@ -1,12 +1,12 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,11 +15,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
 
@@ -27,7 +27,7 @@
 
 {block name="override_tpl"}
 <div class="panel">
-	<div class="panel-heading">{$supplier->name} - {l s='Number of products:'} {count($products)}</div>	
+	<div class="panel-heading">{$supplier->name} - {l s='Number of products:'} {count($products)}</div>
 	<table class="table">
 		<thead>
 			<tr>
@@ -38,6 +38,7 @@
 				<th><span class="title_box">{l s='Reference' d='Admin.Global'}</span></th>
 				<th><span class="title_box">{l s='EAN13'}</span></th>
 				<th><span class="title_box">{l s='UPC'}</span></th>
+				<th><span class="title_box">{l s='MPN'}</span></th>
 				{if $stock_management && $shopContext != Shop::CONTEXT_ALL}<th class="right"><span class="title_box">{l s='Available Quantity'}</span></th>{/if}
 			</tr>
 		</thead>
@@ -52,6 +53,7 @@
 					<td>{if empty($product->reference)}{l s='N/A'}{else}{$product->reference}{/if}</td>
 					<td>{if empty($product->ean13)}{l s='N/A'}{else}{$product->ean13}{/if}</td>
 					<td>{if empty($product->upc)}{l s='N/A'}{else}{$product->upc}{/if}</td>
+					<td>{if empty($product->mpn)}{l s='N/A'}{else}{$product->mpn}{/if}</td>
 					{if $stock_management && $shopContext != Shop::CONTEXT_ALL}<td class="right" width="150">{$product->quantity}</td>{/if}
 				</tr>
 			{else}
@@ -64,6 +66,7 @@
 						<td>{if empty($product_attribute.reference)}{l s='N/A'}{else}{$product_attribute.reference}{/if}</td>
 						<td>{if empty($product_attribute.ean13)}{l s='N/A'}{else}{$product_attribute.ean13}{/if}</td>
 						<td>{if empty($product_attribute.upc)}{l s='N/A'}{else}{$product_attribute.upc}{/if}</td>
+						<td>{if empty($product_attribute.mpn)}{l s='N/A'}{else}{$product_attribute.mpn}{/if}</td>
 						{if $stock_management && $shopContext != Shop::CONTEXT_ALL}<td class="right">{$product_attribute.quantity}</td>{/if}
 					</tr>
 				{/foreach}

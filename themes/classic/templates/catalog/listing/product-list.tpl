@@ -1,12 +1,12 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/AFL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,11 +15,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
 {extends file=$layout}
@@ -28,13 +28,13 @@
   <section id="main">
 
     {block name='product_list_header'}
-      <h2 class="h2">{$listing.label}</h2>
+      <h2 id="js-product-list-header" class="h2">{$listing.label}</h2>
     {/block}
 
     <section id="products">
       {if $listing.products|count}
 
-        <div id="">
+        <div>
           {block name='product_list_top'}
             {include file='catalog/_partials/products-top.tpl' listing=$listing}
           {/block}
@@ -46,7 +46,7 @@
           </div>
         {/block}
 
-        <div id="">
+        <div>
           {block name='product_list'}
             {include file='catalog/_partials/products.tpl' listing=$listing}
           {/block}
@@ -59,9 +59,13 @@
         </div>
 
       {else}
+        <div id="js-product-list-top"></div>
 
-        {include file='errors/not-found.tpl'}
+        <div id="js-product-list">
+          {include file='errors/not-found.tpl'}
+        </div>
 
+        <div id="js-product-list-bottom"></div>
       {/if}
     </section>
 

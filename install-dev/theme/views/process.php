@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,11 +16,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
  $this->displayTemplate('header') ?>
@@ -29,7 +29,7 @@
 <!--
 var install_is_done = '<?php echo addslashes($this->translator->trans('Done!', array(), 'Install')) ?>';
 var process_steps = <?php echo json_encode($this->process_steps) ?>;
-var admin = '<?php echo(file_exists('../admin-dev') ? '../admin-dev' : '../admin') ?>';
+var admin = '<?php echo file_exists('../admin-dev') ? '../admin-dev' : '../admin' ?>';
 -->
 </script>
 
@@ -66,7 +66,7 @@ var admin = '<?php echo(file_exists('../admin-dev') ? '../admin-dev' : '../admin
 			<tr class="odd">
 				<td class="label"><?php echo $this->translator->trans('E-mail', array(), 'Install') ?></td>
 				<td class="resultEnd"><?php echo htmlspecialchars($this->session->admin_email) ?></td>
-				<td rowspan="2" class="print" onclick="$('#password_content').html('<?php echo htmlspecialchars(addslashes($this->session->admin_password)) ?>'); $('#password_display').hide(); window.print();">
+				<td rowspan="2" class="print" onclick="$('#password_content').text('<?php echo htmlspecialchars(addslashes($this->session->admin_password)) ?>'); $('#password_display').hide(); window.print();">
 					<img src="theme/img/print.png" alt="" style="vertical-align:top">
 					<?php echo $this->translator->trans('Print my login information', array(), 'Install') ?>
 				</td>
@@ -76,7 +76,7 @@ var admin = '<?php echo(file_exists('../admin-dev') ? '../admin-dev' : '../admin
 				<td class="resultEnd">
 					<span id="password_content"><?php echo preg_replace('#.#', '*', $this->session->admin_password) ?></span>
 					<span id="password_display">
-						(<a href="#" onclick="$('#password_content').html('<?php echo htmlspecialchars(addslashes($this->session->admin_password)) ?>'); $('#password_display').hide(); return false"><?php echo $this->translator->trans('Display', array(), 'Install'); ?></a>)
+						(<a href="#" onclick="$('#password_content').text('<?php echo htmlspecialchars(addslashes($this->session->admin_password)) ?>'); $('#password_display').hide(); return false"><?php echo $this->translator->trans('Display', array(), 'Install'); ?></a>)
 					</span>
 				</td>
 			</tr>
@@ -84,12 +84,12 @@ var admin = '<?php echo(file_exists('../admin-dev') ? '../admin-dev' : '../admin
 
 		<h3 class="infosBlock">
 			<?php echo $this->translator->trans('For security purposes, you must delete the "install" folder.', array(), 'Install'); ?>
-			<a href="<?php echo $this->translator->trans('http://doc.prestashop.com/display/PS16/Installing+PrestaShop#InstallingPrestaShop-Completingtheinstallation', array(), 'Install') ?>" target="_blank"><img src="theme/img/help.png" /></a>
+			<a href="<?php echo $this->translator->trans('http://doc.prestashop.com/display/PS17/Installing+PrestaShop#InstallingPrestaShop-Completingtheinstallation', array(), 'Install') ?>" target="_blank"><img src="theme/img/help.png" /></a>
 		</h3>
 
 		<div id="boBlock" class="blockInfoEnd clearfix" onclick="window.open(admin)">
 			<img src="theme/img/visu_boBlock.png" alt="" />
-			<h3><?php echo $this->translator->trans('Back Office'); ?></h3>
+			<h3><?php echo $this->translator->trans('Back Office', array(), 'Install'); ?></h3>
 			<p class="description"><?php echo $this->translator->trans('Manage your store using your Back Office. Manage your orders and customers, add modules, change themes, etc.', array(), 'Install'); ?></p>
 			<p>
 				<a class="BO" target="_blank"><span><?php echo $this->translator->trans('Manage your store', array(), 'Install'); ?></span></a>
@@ -127,7 +127,7 @@ var admin = '<?php echo(file_exists('../admin-dev') ? '../admin-dev' : '../admin
 
 <?php if (@fsockopen('addons.prestashop.com', 80, $errno, $errst, 3)): ?>
 	<iframe src="https://addons.prestashop.com/psinstall1541.php?version=2&lang=<?php echo $this->language->getLanguageIso() ?>&activity=<?php echo $this->session->shop_activity ?>&country=<?php echo $this->session->shop_country ?>" scrolling="no" id="prestastore">
-		<p><a href="http://addons.prestashop.com/" target="_blank"><?php echo $this->translator->trans('Check out PrestaShop Addons to add that little something extra to your store!', array(), 'Install'); ?></a></p>
+		<p><a href="https://addons.prestashop.com/" target="_blank"><?php echo $this->translator->trans('Check out PrestaShop Addons to add that little something extra to your store!', array(), 'Install'); ?></a></p>
 	</iframe>
 <?php endif; ?>
 

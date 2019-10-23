@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,20 +16,19 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
-
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Encoding;
 use Defuse\Crypto\Key;
 
 /**
- * Class PhpEncryption engine for openSSL 1.0.1+
+ * Class PhpEncryption engine for openSSL 1.0.1+.
  */
 class PhpEncryptionEngineCore
 {
@@ -47,7 +46,7 @@ class PhpEncryptionEngineCore
     }
 
     /**
-     * Encrypt the plaintext
+     * Encrypt the plaintext.
      *
      * @param string $plaintext Plaintext
      *
@@ -59,12 +58,13 @@ class PhpEncryptionEngineCore
     }
 
     /**
-     * Decrypt the cipher text
+     * Decrypt the cipher text.
      *
      * @param string $cipherText Cipher text
      *
      * @return bool|string Plaintext
      *                     `false` if unable to decrypt
+     *
      * @throws Exception
      */
     public function decrypt($cipherText)
@@ -85,7 +85,9 @@ class PhpEncryptionEngineCore
     /**
      * @param $header
      * @param $bytes
+     *
      * @return string
+     *
      * @throws \Defuse\Crypto\Exception\EnvironmentIsBrokenException
      */
     public static function saveBytesToChecksummedAsciiSafeString($header, $bytes)
@@ -105,6 +107,7 @@ class PhpEncryptionEngineCore
 
     /**
      * @param $hexString
+     *
      * @return Key
      */
     public static function loadFromAsciiSafeString($hexString)
@@ -114,6 +117,7 @@ class PhpEncryptionEngineCore
 
     /**
      * @return string
+     *
      * @throws Exception
      *
      * @see https://github.com/paragonie/random_compat/blob/v1.4.1/lib/random_bytes_openssl.php
@@ -151,6 +155,7 @@ class PhpEncryptionEngineCore
 
     /**
      * @param $buf
+     *
      * @return string
      */
     public static function saveToAsciiSafeString($buf)

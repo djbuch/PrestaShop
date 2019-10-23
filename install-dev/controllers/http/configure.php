@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,11 +16,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
@@ -57,7 +57,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
                     'method' => 'addMemberToNewsletter',
                     'language' => $this->language->getLanguageIso(),
                     'visitorType' => 1,
-                    'source' => 'installer'
+                    'source' => 'installer',
                 ));
                 Tools::file_get_contents('http://www.prestashop.com/ajax/controller.php?'.$params);
             }
@@ -101,7 +101,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
         }
 
         if ($this->session->admin_lastname && !Validate::isName($this->session->admin_lastname)) {
-            $this->errors['admin_lastname'] = $this->translator->trans('Your lastname contains some invalid characters');
+            $this->errors['admin_lastname'] = $this->translator->trans('Your lastname contains some invalid characters', array(), 'Install');
         } elseif (strlen($this->session->admin_lastname) > 32) {
             $this->errors['admin_lastname'] = $this->translator->trans('The field %field% is limited to %limit% characters', array('%field%' => $this->translator->trans('lastname', array(), 'Install'), '%limit%' => 32), 'Install');
         }
@@ -155,7 +155,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
                 $newheight = $height * $percent;
 
                 if (!is_writable(_PS_ROOT_DIR_.'/img/')) {
-                    $error = $this->translator->trans('Image folder %s is not writable', _PS_ROOT_DIR_.'/img/', array(), 'Install');
+                    $error = $this->translator->trans('Image folder %s is not writable', array(_PS_ROOT_DIR_.'/img/'), 'Install');
                 }
                 if (!$error) {
                     list($src_width, $src_height, $type) = getimagesize($tmp_name);
@@ -165,7 +165,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
                     imagefilledrectangle($dest_image, 0, 0, $src_width, $src_height, $white);
                     imagecopyresampled($dest_image, $src_image, 0, 0, 0, 0, $src_width, $src_height, $src_width, $src_height);
                     if (!imagejpeg($dest_image, _PS_ROOT_DIR_.'/img/logo.jpg', 95)) {
-                        $error = $this->l('An error occurred during logo copy.');
+                        $error = $this->trans('An error occurred during logo copy.', array(), 'Install');
                     } else {
                         imagedestroy($dest_image);
                         @chmod($filename, 0664);
@@ -195,7 +195,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
      */
     public function getTimezones()
     {
-        if (!is_null($this->cache_timezones)) {
+        if (null !== $this->cache_timezones) {
             return;
         }
 
@@ -210,6 +210,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
                 $timezones[] = (string)$timezone['name'];
             }
         }
+
         return $timezones;
     }
 
@@ -232,6 +233,7 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
                 $timezones[(string)$relation['iso']] = (string)$relation['zone'];
             }
         }
+
         return isset($timezones[$iso]) ? $timezones[$iso] : '';
     }
 
@@ -316,6 +318,6 @@ class InstallControllerHttpConfigure extends InstallControllerHttp implements Ht
             return;
         }
 
-        return '<span class="result aligned errorTxt">'.$this->errors[$field].'</span>';
+        return '<span class="result aligned errorTxt">' . Tools::htmlentitiesUTF8($this->errors[$field]) . '</span>';
     }
 }

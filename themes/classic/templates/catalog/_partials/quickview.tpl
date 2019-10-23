@@ -1,12 +1,12 @@
 {**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/AFL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,25 +15,25 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  * International Registered Trademark & Property of PrestaShop SA
  *}
 <div id="quickview-modal-{$product.id}-{$product.id_product_attribute}" class="modal fade quickview" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-dialog-centered" role="document">
    <div class="modal-content">
      <div class="modal-header">
-       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+       <button type="button" class="close" data-dismiss="modal" aria-label="{l s='Close' d='Shop.Theme.Global'}">
          <span aria-hidden="true">&times;</span>
        </button>
      </div>
      <div class="modal-body">
       <div class="row">
         <div class="col-md-6 col-sm-6 hidden-xs-down">
-          {block name='product_cover_tumbnails'}
+          {block name='product_cover_thumbnails'}
             {include file='catalog/_partials/product-cover-thumbnails.tpl'}
           {/block}
           <div class="arrows js-arrows">
@@ -62,10 +62,9 @@
                 {block name='product_add_to_cart'}
                   {include file='catalog/_partials/product-add-to-cart.tpl'}
                 {/block}
-                
-                {block name='product_refresh'}
-                  <input class="product-refresh" data-url-update="false" name="refresh" type="submit" value="{l s='Refresh' d='Shop.Theme.Actions'}" hidden>
-                {/block}
+
+                {* Input to refresh product HTML removed, block kept for compatibility with themes *}
+                {block name='product_refresh'}{/block}
             </form>
           </div>
         {/block}
@@ -73,7 +72,9 @@
       </div>
      </div>
      <div class="modal-footer">
-       {hook h='displayProductButtons' product=$product}
+        <div class="product-additional-info">
+          {hook h='displayProductAdditionalInfo' product=$product}
+        </div>
     </div>
    </div>
  </div>

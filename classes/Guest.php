@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,16 +16,16 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
 /**
- * Class GuestCore
+ * Class GuestCore.
  */
 class GuestCore extends ObjectModel
 {
@@ -77,7 +77,7 @@ class GuestCore extends ObjectModel
     );
 
     /**
-     * Set user agent
+     * Set user agent.
      */
     public function userAgent()
     {
@@ -90,7 +90,7 @@ class GuestCore extends ObjectModel
     }
 
     /**
-     * Get Guest Language
+     * Get Guest Language.
      *
      * @param $acceptLanguage
      *
@@ -112,15 +112,13 @@ class GuestCore extends ObjectModel
         }
 
         // Only the first language is returned
-        return (count($langsArray) ? key($langsArray) : '');
+        return count($langsArray) ? key($langsArray) : '';
     }
 
     /**
-     * Get browser
+     * Get browser.
      *
      * @param string $userAgent
-     *
-     * @return null
      */
     protected function getBrowser($userAgent)
     {
@@ -135,46 +133,47 @@ class GuestCore extends ObjectModel
             'IE 9' => 'MSIE 9',
             'IE 8' => 'MSIE 8',
             'IE 7' => 'MSIE 7',
-            'IE 6' => 'MSIE 6'
+            'IE 6' => 'MSIE 6',
         );
         foreach ($browserArray as $k => $value) {
             if (strstr($userAgent, $value)) {
                 $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow('
 				SELECT `id_web_browser`
-				FROM `'._DB_PREFIX_.'web_browser` wb
-				WHERE wb.`name` = \''.pSQL($k).'\'');
+				FROM `' . _DB_PREFIX_ . 'web_browser` wb
+				WHERE wb.`name` = \'' . pSQL($k) . '\'');
 
                 return $result['id_web_browser'];
             }
         }
+
         return null;
     }
 
     /**
-     * Get OS
+     * Get OS.
      *
      * @param string $userAgent
-     *
-     * @return null
      */
     protected function getOs($userAgent)
     {
         $osArray = array(
+            'Windows 10' => 'Windows NT 10',
+            'Windows 8.1' => 'Windows NT 6.3',
             'Windows 8' => 'Windows NT 6.2',
             'Windows 7' => 'Windows NT 6.1',
             'Windows Vista' => 'Windows NT 6.0',
             'Windows XP' => 'Windows NT 5',
             'MacOsX' => 'Mac OS X',
             'Android' => 'Android',
-            'Linux' => 'X11'
+            'Linux' => 'X11',
         );
 
         foreach ($osArray as $k => $value) {
             if (strstr($userAgent, $value)) {
                 $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow('
 				SELECT `id_operating_system`
-				FROM `'._DB_PREFIX_.'operating_system` os
-				WHERE os.`name` = \''.pSQL($k).'\'');
+				FROM `' . _DB_PREFIX_ . 'operating_system` os
+				WHERE os.`name` = \'' . pSQL($k) . '\'');
 
                 return $result['id_operating_system'];
             }
@@ -184,7 +183,7 @@ class GuestCore extends ObjectModel
     }
 
     /**
-     * Get Guest ID from Customer ID
+     * Get Guest ID from Customer ID.
      *
      * @param int $idCustomer Customer ID
      *
@@ -197,24 +196,25 @@ class GuestCore extends ObjectModel
         }
         $result = Db::getInstance()->getRow('
 		SELECT `id_guest`
-		FROM `'._DB_PREFIX_.'guest`
-		WHERE `id_customer` = '.(int) ($idCustomer));
+		FROM `' . _DB_PREFIX_ . 'guest`
+		WHERE `id_customer` = ' . (int) ($idCustomer));
+
         return $result['id_guest'];
     }
 
     /**
-     * Merge with Customer
+     * Merge with Customer.
      *
-     * @param int $idGuest    Guest ID
+     * @param int $idGuest Guest ID
      * @param int $idCustomer Customer ID
      */
     public function mergeWithCustomer($idGuest, $idCustomer)
     {
         // Since the guests are merged, the guest id in the connections table must be changed too
         Db::getInstance()->execute('
-		UPDATE `'._DB_PREFIX_.'connections` c
-		SET c.`id_guest` = '.(int) ($idGuest).'
-		WHERE c.`id_guest` = '.(int) ($this->id));
+		UPDATE `' . _DB_PREFIX_ . 'connections` c
+		SET c.`id_guest` = ' . (int) ($idGuest) . '
+		WHERE c.`id_guest` = ' . (int) ($this->id));
 
         // The current guest is removed from the database
         $this->delete();
@@ -228,7 +228,7 @@ class GuestCore extends ObjectModel
     }
 
     /**
-     * Set new guest
+     * Set new guest.
      *
      * @param Cookie $cookie
      */

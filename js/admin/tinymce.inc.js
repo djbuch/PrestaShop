@@ -30,6 +30,13 @@ function changeToMaterial() {
 }
 
 function tinySetup(config) {
+  if (typeof tinyMCE === 'undefined') {
+    setTimeout(function() {
+      tinySetup(config);
+    }, 100);
+    return;
+  }
+
   if (!config) {
     config = {};
   }
@@ -37,6 +44,7 @@ function tinySetup(config) {
   if (typeof config.editor_selector != 'undefined') {
     config.selector = '.' + config.editor_selector;
   }
+
 
   var default_config = {
     selector: ".rte",
@@ -48,6 +56,7 @@ function tinySetup(config) {
     filemanager_title: "File manager",
     external_plugins: {"filemanager": baseAdminDir + "filemanager/plugin.min.js"},
     language: iso_user,
+    content_style : (lang_is_rtl === '1' ? "body {direction:rtl;}" : ""),
     skin: "prestashop",
     menubar: false,
     statusbar: false,
@@ -57,7 +66,10 @@ function tinySetup(config) {
     extended_valid_elements: "em[class|name|id],@[role|data-*|aria-*]",
     valid_children: "+*[*]",
     valid_elements: "*[*]",
-    init_instance_callback: "changeToMaterial"
+    init_instance_callback: "changeToMaterial",
+    rel_list:[
+      { title: 'nofollow', value: 'nofollow' }
+    ]
   };
 
   $.each(default_config, function (index, el) {

@@ -1,12 +1,12 @@
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -15,11 +15,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
@@ -31,7 +31,6 @@ $(document).ready(function() {
   formCategory.init();
   stock.init();
   supplier.init();
-  specificPrices.init();
   warehouseCombinations.init();
   customFieldCollection.init();
   virtualProduct.init();
@@ -66,7 +65,7 @@ $(document).ready(function() {
 
   /** Attach date picker */
   $('.datepicker').datetimepicker({
-    locale: iso_user,
+    locale: full_language_code,
     format: 'YYYY-MM-DD'
   });
 
@@ -75,7 +74,23 @@ $(document).ready(function() {
     $('[data-toggle="tooltip"]').tooltip('hide');
     $('[data-toggle="popover"]').popover('hide');
   });
+
+  $('.summary-description-container a[data-toggle="tab"]').on('shown.bs.tab', resetEditor);
 });
+
+/**
+ * Reset active tinyMce editor (triggered when switch language, or switching tabs)
+ */
+function resetEditor() {
+  const languageEditorsSelector = '.summary-description-container .panel.active div.translation-field.active textarea.autoload_rte';
+  $(languageEditorsSelector).each(function(index, textarea) {
+    const editor = tinyMCE.get(textarea.id);
+    if (editor) {
+      //Reset content to force refresh of editor
+      editor.setContent(editor.getContent());
+    }
+  });
+}
 
 /**
  * Manage show or hide fields
@@ -183,12 +198,10 @@ var displayFieldsManager = (function() {
       if (showVariationsSelector.find('input:checked').val() === '1' || $('#accordion_combinations tr:not(#loading-attribute)').length > 0) {
         combinationsBlock.show();
 
-        $('#specific-price-combination-selector').removeClass('hide').show();
         $('#form-nav a[href="#step3"]').text(translate_javascripts['Combinations']);
         $('#product_qty_0_shortcut_div, #quantities').hide();
       } else {
         combinationsBlock.hide();
-        $('#specific-price-combination-selector').hide();
         $('#product_qty_0_shortcut_div, #quantities').show();
       }
 
@@ -272,7 +285,7 @@ var formCategory = (function() {
   var elem = $('#form_step1_new_category');
 
   /** Send category form and it to nested categories */
-  function send() {
+  function send(form) {
     $.ajax({
       type: 'POST',
       url: elem.attr('data-action'),
@@ -292,12 +305,10 @@ var formCategory = (function() {
         var html = '<li>' +
           '<div class="checkbox js-checkbox">' +
             '<label>' +
-              '<input type="checkbox" name="form[step1][categories][tree][]" checked value="'+response.category.id+'">' +
+              '<input type="checkbox" name="form[step1][categories][tree][]" checked value="'+response.category.id+'"> ' +
                 response.category.name[1] +
+                '<input type="radio" value="'+response.category.id+'" name="ignore" class="default-category">' +
             '</label>' +
-            '<div class="radio pull-right">' +
-              '<input type="radio" value="'+response.category.id+'" name="ignore" class="default-category">' +
-            '</div>' +
           '</div>' +
           '</li>';
 
@@ -319,6 +330,9 @@ var formCategory = (function() {
           'breadcrumb': ''
         };
         productCategoriesTags.createTag(tag);
+
+        //hide the form
+        form.hideBlock();
       },
       error: function(response) {
         $.each(jQuery.parseJSON(response.responseText), function(key, errors) {
@@ -343,10 +357,7 @@ var formCategory = (function() {
       var that = this;
       /** remove all categories from selector, except pre defined */
       $('#add-categories button.save').click(function(){
-        send();
-        if($('#form_step1_new_category_name').val().length > 2){
-          that.hideBlock();
-        }
+        send(that);
       });
       $('#add-categories button[type="reset"]').click(function(){
         that.hideBlock();
@@ -354,7 +365,7 @@ var formCategory = (function() {
     },
     'hideBlock': function() {
       $('#form_step1_new_category_name').val('');
-      $('#add-category-button').css('display', 'block');
+      $('#add-category-button').show();
       $('#add-categories-content').addClass('hide');
     }
   };
@@ -366,11 +377,13 @@ var formCategory = (function() {
 var featuresCollection = (function() {
 
   var collectionHolder = $('.feature-collection');
+  var maxCollectionChildren = collectionHolder.children('.row').length;
 
   /** Add a feature */
   function add() {
-    var newForm = collectionHolder.attr('data-prototype').replace(/__name__/g, collectionHolder.children('.row').length);
+    var newForm = collectionHolder.attr('data-prototype').replace(/__name__/g, maxCollectionChildren);
     collectionHolder.append(newForm);
+    maxCollectionChildren += 1;
     prestaShopUiKit.initSelects();
   }
 
@@ -390,10 +403,15 @@ var featuresCollection = (function() {
 
         modalConfirmation.create(translate_javascripts['Are you sure to delete this?'], null, {
           onContinue: function() {
-            _this.parent().parent().parent().remove();
+            _this.closest('.product-feature').remove();
           }
         }).show();
       });
+
+      function replaceEndingIdFromUrl(url, newId)
+      {
+        return url.replace(/\/\d+(?!.*\/\d+)((?=\?.*))?/, '/' + newId);
+      }
 
       /** On feature selector event change, refresh possible values list */
       $(document).on('change', '.feature-collection select.feature-selector', function(event) {
@@ -403,16 +421,16 @@ var featuresCollection = (function() {
 
         if('' !== $(this).val()) {
           $.ajax({
-            url: $(this).attr('data-action').replace(/\/\d+(?=\?.*)/, '/' + $(this).val()),
+            url: replaceEndingIdFromUrl($(this).attr('data-action'), $(this).val()),
             success: function(response) {
               $selector.prop('disabled', response.length === 0);
               $selector.empty();
-              $.each(response, function(key, val) {
+              $.each(response, function(index, elt) {
                 // the placeholder shouldn't be posted.
-                if ('0' == key) {
-                  key = '';
+                if ('0' == elt.id) {
+                  elt.id = '';
                 }
-                $selector.append($('<option></option>').attr('value', key).text(val));
+                $selector.append($('<option></option>').attr('value', elt.id).text(elt.value));
               });
             }
           });
@@ -444,7 +462,7 @@ var supplier = (function() {
 
   var supplierInputManage = function(input) {
     var supplierDefaultInput = $('#form_step6_suppliers input[name="form[step6][default_supplier]"][value=' + $(input).val() +']');
-    if($(input).is(':checked')) {
+    if ($(input).is(':checked')) {
       supplierDefaultInput.prop('disabled', false).show();
     } else {
       supplierDefaultInput.prop('disabled', true).hide();
@@ -547,211 +565,10 @@ var nav = (function() {
 
       formNav.find("a").on('shown.bs.tab', function(e) {
         if (e.target.hash) {
-          onTabSwitch(e.target.hash);
           window.location.hash = e.target.hash.replace('#', '#' + prefix);
         }
       });
-
-      /** on tab switch */
-      function onTabSwitch(currentTab) {
-        if (currentTab === '#step2') {
-          /** each switch to price tab, reload combinations into specific price form */
-          specificPrices.refreshCombinationsList();
-        }
-      }
     }
-  };
-})();
-
-/**
- * Specific prices management
- */
-var specificPrices = (function() {
-  var id_product = $('#form_id_product').val();
-  var elem = $('#js-specific-price-list');
-  var leaveInitialPrice = $('#form_step2_specific_price_leave_bprice');
-  var productPriceField = $('#form_step2_specific_price_sp_price');
-  var discountTypeField = $('#form_step2_specific_price_sp_reduction_type');
-  var discountTaxField = $('#form_step2_specific_price_sp_reduction_tax');
-
-  /** Get all specific prices */
-  function getAll() {
-    var url = elem.attr('data').replace(/list\/\d+/, 'list/' + id_product);
-
-    $.ajax({
-      type: 'GET',
-      url: url,
-      success: function(specific_prices) {
-        var tbody = elem.find('tbody');
-        tbody.find('tr').remove();
-
-        if (specific_prices.length > 0) {
-          elem.removeClass('hide');
-        } else {
-          elem.addClass('hide');
-        }
-
-        $.each(specific_prices, function(key, specific_price) {
-          var row = '<tr>' +
-            '<td>' + specific_price.rule_name + '</td>' +
-            '<td>' + specific_price.attributes_name + '</td>' +
-            '<td>' + specific_price.currency + '</td>' +
-            '<td>' + specific_price.country + '</td>' +
-            '<td>' + specific_price.group + '</td>' +
-            '<td>' + specific_price.customer + '</td>' +
-            '<td>' + specific_price.fixed_price + '</td>' +
-            '<td>' + specific_price.impact + '</td>' +
-            '<td>' + specific_price.period + '</td>' +
-            '<td>' + specific_price.from_quantity + '</td>' +
-            '<td>' + (specific_price.can_delete ? '<a href="' + $('#js-specific-price-list').attr('data-action-delete').replace(/delete\/\d+/, 'delete/' + specific_price.id_specific_price) + '" class="js-delete delete"><i class="material-icons">delete</i></a>' : '') + '</td>' +
-            '</tr>';
-
-          tbody.append(row);
-        });
-      }
-    });
-  }
-
-  /**
-   * Add a specific price
-   * @param {object} elem - The clicked link
-   */
-  function add(elem) {
-    $.ajax({
-      type: 'POST',
-      url: $('#specific_price_form').attr('data-action'),
-      data: $('#specific_price_form input, #specific_price_form select, #form_id_product').serialize(),
-      beforeSend: function() {
-        elem.attr('disabled', 'disabled');
-      },
-      success: function() {
-        showSuccessMessage(translate_javascripts['Form update success']);
-        $('#specific_price_form .js-cancel').click();
-        getAll();
-      },
-      complete: function() {
-        elem.removeAttr('disabled');
-      },
-      error: function(errors) {
-        showErrorMessage(errors.responseJSON);
-      }
-    });
-  }
-
-  /**
-   * Remove a specific price
-   * @param {object} elem - The clicked link
-   */
-  function remove(elem) {
-    modalConfirmation.create(translate_javascripts['This will delete the specific price. Do you wish to proceed?'], null, {
-      onContinue: function() {
-        $.ajax({
-          type: 'GET',
-          url: elem.attr('href'),
-          beforeSend: function() {
-            elem.attr('disabled', 'disabled');
-          },
-          success: function(response) {
-            getAll();
-            showSuccessMessage(response);
-          },
-          error: function(response) {
-            showErrorMessage(response.responseJSON);
-          },
-          complete: function() {
-            elem.removeAttr('disabled');
-          }
-        });
-      }
-    }).show();
-  }
-
-  /** refresh combinations list selector for specific price form */
-  function refreshCombinationsList() {
-    var elem = $('#form_step2_specific_price_sp_id_product_attribute');
-    var url = elem.attr('data-action').replace(/product-combinations\/\d+/, 'product-combinations/' + id_product);
-
-    $.ajax({
-      type: 'GET',
-      url: url,
-      success: function(combinations) {
-        /** remove all options except first one */
-        elem.find('option:gt(0)').remove();
-
-        $.each(combinations, function(key, combination) {
-          elem.append('<option value="' + combination.id + '">' + combination.name + '</option>');
-        });
-      }
-    });
-  }
-
-  /**
-   * Because all "forms" are encapsulated in a global form, we just can't use reset button
-   * Reset all subform inputs values
-   */
-  function resetForm() {
-    $('#specific_price_form input').val('');
-  }
-
-  return {
-    'init': function() {
-      this.getAll();
-
-      $('#specific-price .add').click(function () {
-        $(this).hide();
-      });
-
-      $('#specific_price_form .js-cancel').click(function() {
-        resetForm();
-        $('#specific-price > a').click();
-        $('#specific-price .add').click().show();
-        productPriceField.prop('disabled', true);
-      });
-
-      $('#specific_price_form .js-save').click(function () {
-        add($(this));
-        resetForm();
-      });
-
-      $(document).on('click', '#js-specific-price-list .js-delete', function (e) {
-        e.preventDefault();
-        remove($(this));
-      });
-
-      $('#form_step2_specific_price_sp_reduction_type').change(function () {
-        if ($(this).val() === 'percentage') {
-          $('#form_step2_specific_price_sp_reduction_tax').hide();
-        } else {
-          $('#form_step2_specific_price_sp_reduction_tax').show();
-        }
-      });
-
-      this.refreshCombinationsList();
-
-      /* enable price field only when needed */
-      leaveInitialPrice.on('click', function togglePriceField() {
-        productPriceField.prop('disabled', $(this).is(':checked'))
-          .val('')
-        ;
-      });
-
-      /* enable tax type field only when reduction by amount is selected */
-      discountTypeField.on('change', function toggleDiscountTaxField() {
-        var uglySelect2Selector = $('#select2-form_step2_specific_price_sp_reduction_tax-container').parent().parent();
-        if ($(this).val() === 'amount') {
-          uglySelect2Selector.show();
-        }else {
-          uglySelect2Selector.hide();
-        }
-      });
-
-    },
-    'getAll': function() {
-      getAll();
-    },
-    'refreshCombinationsList': function() {
-      refreshCombinationsList();
-    },
   };
 })();
 
@@ -767,7 +584,7 @@ var warehouseCombinations = (function() {
       // toggle all button action
       $(document).on('click', 'div[id^="warehouse_combination_"] button.check_all_warehouse', function() {
         var checkboxes = $(this).closest('div[id^="warehouse_combination_"]').find('input[type="checkbox"][id$="_activated"]');
-        checkboxes.prop('checked', checkboxes.filter(':checked').size() === 0);
+        checkboxes.prop('checked', checkboxes.filter(':checked').length === 0);
       });
       // location disablation depending on 'stored' checkbox
       $(document).on('change', 'div[id^="warehouse_combination_"] input[id^="form_step4_warehouse_combination_"][id$="_activated"]', function() {
@@ -788,7 +605,7 @@ var warehouseCombinations = (function() {
       });
     },
     'refresh': function() {
-      var show = $('input#form_step3_advanced_stock_management:checked').size() > 0;
+      var show = $('input#form_step3_advanced_stock_management:checked').length > 0;
       if (show) {
         var url = collectionHolder.attr('data-url').replace(/\/\d+(?=\?.*)/, '/' + id_product);
         $.ajax({
@@ -812,7 +629,7 @@ var warehouseCombinations = (function() {
 var form = (function() {
   var elem = $('#form');
 
-  function send(redirect, target) {
+  function send(redirect, target, callBack) {
     // target value by default
     if (typeof(target) == 'undefined') {
       target = false;
@@ -840,26 +657,39 @@ var form = (function() {
         $('ul.text-danger').remove();
         $('*.has-danger').removeClass('has-danger');
         $('#form-nav li.has-error').removeClass('has-error');
+        updateDisplayGlobalErrors(null);
       },
       success: function(response) {
+        if (callBack) {
+          callBack();
+        }
         showSuccessMessage(translate_javascripts['Form update success']);
         //update the customization ids
         if (typeof response.customization_fields_ids != "undefined") {
           $.each(response.customization_fields_ids, function (k, v) {
-              $("#form_step6_custom_fields_" + k + "_id_customization_field").val(v);
+            $("#form_step6_custom_fields_" + k + "_id_customization_field").val(v);
           });
         }
-        if (redirect) {
-          if (target) {
-            if (target == '_blank') {
-              openBlank.location = redirect;
-            } else {
-              window.open(redirect, target);
-            }
-          } else {
-            window.location = redirect;
-          }
+
+        $('.js-spinner').hide();
+
+        if (!redirect) {
+          return;
         }
+
+        if (false === target) {
+          window.location = redirect;
+
+          return;
+        }
+
+        if ('_blank' !== target) {
+          window.open(redirect, target);
+
+          return;
+        }
+
+        openBlank.location = redirect;
       },
       error: function(response) {
         showErrorMessage(translate_javascripts['Form update errors']);
@@ -874,12 +704,14 @@ var form = (function() {
           tabsWithErrors.push(key);
 
           var html = '<ul class="list-unstyled text-danger">';
-          $.each(errors, function(key, error) {
+          $.each(errors, function(unusedKey, error) {
             html += '<li>' + error + '</li>';
           });
           html += '</ul>';
 
-          if (key.match(/^combination_.*/)) {
+          if (0 === key.localeCompare('error')) {
+            updateDisplayGlobalErrors(html);
+          } else if (key.match(/^combination_.*/)) {
             $('#' + key).parent().addClass('has-danger').append(html);
           } else {
             $('#form_' + key).parent().addClass('has-danger').append(html);
@@ -928,22 +760,39 @@ var form = (function() {
   }
 
   function switchLanguage(iso_code) {
-    $('div.translations.tabbable > div > div.tab-pane:not(.translation-label-' + iso_code + ')').removeClass('active');
-    $('div.translations.tabbable > div > div.tab-pane.translation-label-' + iso_code).addClass('active');
+    $('div.translations.tabbable > div > div.translation-field:not(.translation-label-' + iso_code + ')').removeClass('show active');
+
+    const langueTabSelector = 'div.translations.tabbable > div > div.translation-field.translation-label-' + iso_code;
+    $(langueTabSelector).addClass('show active');
+    resetEditor();
   }
 
   function updateMissingTranslatedNames() {
-      var namesDiv = $('#form_step1_names');
-      var defaultLanguageValue = null;
-      $("input[id^='form_step1_name_']", namesDiv).each(function(index) {
-          var value = $(this).val();
-          // The first language is ALWAYS the employee language
-          if (0 === index) {
-              defaultLanguageValue = value;
-          } else if (0 === value.length) {
-              $(this).val(defaultLanguageValue);
-          }
-      });
+    var namesDiv = $('#form_step1_names');
+    var defaultLanguageValue = null;
+    $("input[id^='form_step1_name_']", namesDiv).each(function(index) {
+      var value = $(this).val();
+      // The first language is ALWAYS the employee language
+      if (0 === index) {
+        defaultLanguageValue = value;
+      } else if (0 === value.length) {
+        $(this).val(defaultLanguageValue);
+      }
+    });
+  }
+
+  /**
+   * Depending on the provided params, this method displays or hides
+   * an error panel with the form errors not linked to a specific field.
+   *
+   * @param {string} content The HTML content to display
+   */
+  function updateDisplayGlobalErrors(content) {
+    const target = $("#form_bubbling_errors");
+    target.html('');
+    if (content) {
+      target.html(`<div class="alert alert-danger">${content}</div>`);
+    }
   }
 
   return {
@@ -954,38 +803,38 @@ var form = (function() {
       });
 
       /** create keyboard event for save */
-      jwerty.key('ctrl+S/cmd+S', function(e) {
+      jwerty.key('alt+shift+S', function(e) {
         e.preventDefault();
         send();
       });
 
       /** create keyboard event for save & duplicate */
-      jwerty.key('ctrl+D/cmd+D', function(e) {
+      jwerty.key('alt+shift+D', function(e) {
         e.preventDefault();
         send($('.product-footer .duplicate').attr('data-redirect'));
       });
 
       /** create keyboard event for save & new */
-      jwerty.key('ctrl+P/cmd+P', function(e) {
+      jwerty.key('alt+shift+P', function(e) {
         e.preventDefault();
         send($('.product-footer .new-product').attr('data-redirect'));
       });
 
       /** create keyboard event for save & go catalog */
-      jwerty.key('ctrl+Q', function(e) {
+      jwerty.key('alt+shift+Q', function(e) {
         e.preventDefault();
         send($('.product-footer .go-catalog').attr('data-redirect'));
       });
 
       /** create keyboard event for save & go preview */
-      jwerty.key('ctrl+E/cmd+E', function(e) {
+      jwerty.key('alt+shift+V', function(e) {
           e.preventDefault();
           var productFooter = $('.product-footer .preview');
           send(productFooter.attr('data-redirect'), productFooter.attr('target'));
       });
 
       /** create keyboard event for save & active or desactive product*/
-      jwerty.key('ctrl+O/cmd+O', function(e) {
+      jwerty.key('alt+shift+O', function(e) {
         e.preventDefault();
         var step1CheckBox = $('#form_step1_active');
         step1CheckBox.prop('checked', !step1CheckBox.is(':checked'));
@@ -1002,9 +851,15 @@ var form = (function() {
       });
 
       /** on save with duplicate|new|preview */
-      $('.btn-submit', elem).click(function(event) {
+      $('.btn-submit, .preview', elem).click(function(event) {
         event.preventDefault();
         send($(this).attr('data-redirect'), $(this).attr('target'));
+      });
+
+      $('.js-btn-save').on('click', function (event) {
+        event.preventDefault();
+        $('.js-spinner').css('display', 'inline-block');
+        send($(this).attr('href'));
       });
 
       /** on active field change, send form */
@@ -1013,10 +868,11 @@ var form = (function() {
         $('.for-switch.online-title').toggle(active);
         $('.for-switch.offline-title').toggle(!active);
         // update link preview
-        var urlActive = $('#product_form_preview_btn').attr('data-redirect');
-        var urlDeactive = $('#product_form_preview_btn').attr('data-url_deactive');
-        $('#product_form_preview_btn').attr('data-redirect', urlDeactive);
-        $('#product_form_preview_btn').attr('data-url_deactive', urlActive);
+        var previewButton = $('#product_form_preview_btn');
+        var urlActive = previewButton.attr('data-redirect');
+        var urlDeactive = previewButton.attr('data-url-deactive');
+        previewButton.attr('data-redirect', urlDeactive);
+        previewButton.attr('data-url-deactive', urlActive);
         // update product
         send();
       });
@@ -1032,76 +888,73 @@ var form = (function() {
         }).show();
       });
 
-      /** show rendered form after page load */
-      $(window).load(function() {
-        $('#form-loading').fadeIn(function() {
-          /** Create Bloodhound engine */
-          var engine = new Bloodhound({
-            datumTokenizer: function(d) {
-              return Bloodhound.tokenizers.whitespace(d.label);
-            },
-            queryTokenizer: Bloodhound.tokenizers.whitespace,
-            prefetch: {
-              url: $('#form_step3_attributes').attr('data-prefetch'),
-              cache: false
-            }
-          });
-
-          /** init input typeahead */
-          $('#form_step3_attributes').tokenfield({
-            typeahead: [{
-              hint: false,
-              cache: false
-            }, {
-              source: function(query, syncResults) {
-                engine.search(query, function(suggestions) {
-                  syncResults(filter(suggestions));
-                });
-              },
-              display: 'label'
-            }]
-          });
-
-          /** Filter suggestion with selected tokens */
-          var filter = function(suggestions) {
-            var selected = [];
-            $('#attributes-generator input.attribute-generator').each(function() {
-              selected.push($(this).val());
-            });
-
-            return $.grep(suggestions, function(suggestion) {
-              return $.inArray(suggestion.value, selected) === -1 && $.inArray('group-' + suggestion.data.id_group, selected) === -1;
-            });
-          };
-
-          /** On event "tokenfield:createtoken" : stop event if its not a typehead result */
-          $('#form_step3_attributes').on('tokenfield:createtoken', function(e) {
-            if (!e.attrs.data && e.handleObj.origType !== 'tokenfield:createtoken') {
-              return false;
-            }
-          });
-
-          /** On event "tokenfield:createdtoken" : store attributes in input when add a token */
-          $('#form_step3_attributes').on('tokenfield:createdtoken', function(e) {
-            if (e.attrs.data) {
-              $('#attributes-generator').append('<input type="hidden" id="attribute-generator-' + e.attrs.value + '" class="attribute-generator" value="' + e.attrs.value + '" name="options[' + e.attrs.data.id_group + '][' + e.attrs.value + ']" />');
-            } else if (e.handleObj.origType == 'tokenfield:createdtoken') {
-              $('#attributes-generator').append('<input type="hidden" id="attribute-generator-' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + '" class="attribute-generator" value="' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + '" name="options[' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('group-id') + '][' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + ']" />');
-            }
-          });
-
-          /** On event "tokenfield:removedtoken" : remove stored attributes input when remove token */
-          $('#form_step3_attributes').on('tokenfield:removedtoken', function(e) {
-            $('#attribute-generator-' + e.attrs.value).remove();
-          });
-        });
-        imagesProduct.initExpander();
+      $('#form-loading').fadeIn(function() {
+      /** Create Bloodhound engine */
+      var engine = new Bloodhound({
+        datumTokenizer: function(d) {
+          return Bloodhound.tokenizers.whitespace(d.label);
+        },
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        prefetch: {
+          url: $('#form_step3_attributes').attr('data-prefetch'),
+          cache: false
+        }
       });
+
+      /** init input typeahead */
+      $('#form_step3_attributes').tokenfield({
+        typeahead: [{
+          hint: false,
+          cache: false
+        }, {
+          source: function(query, syncResults) {
+            engine.search(query, function(suggestions) {
+              syncResults(filter(suggestions));
+            });
+          },
+          display: 'label'
+        }],
+        minWidth: '768px'
+      });
+
+      /** Filter suggestion with selected tokens */
+      var filter = function(suggestions) {
+        var selected = [];
+        $('#attributes-generator input.attribute-generator').each(function() {
+          selected.push($(this).val());
+        });
+
+        return $.grep(suggestions, function(suggestion) {
+          return $.inArray(suggestion.value, selected) === -1 && $.inArray('group-' + suggestion.data.id_group, selected) === -1;
+        });
+      };
+
+      /** On event "tokenfield:createtoken" : stop event if its not a typehead result */
+      $('#form_step3_attributes').on('tokenfield:createtoken', function(e) {
+        if (!e.attrs.data && e.handleObj.origType !== 'tokenfield:createtoken') {
+          return false;
+        }
+      });
+
+      /** On event "tokenfield:createdtoken" : store attributes in input when add a token */
+      $('#form_step3_attributes').on('tokenfield:createdtoken', function(e) {
+        if (e.attrs.data) {
+          $('#attributes-generator').append('<input type="hidden" id="attribute-generator-' + e.attrs.value + '" class="attribute-generator" value="' + e.attrs.value + '" name="options[' + e.attrs.data.id_group + '][' + e.attrs.value + ']" />');
+        } else if (e.handleObj.origType == 'tokenfield:createdtoken') {
+          $('#attributes-generator').append('<input type="hidden" id="attribute-generator-' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + '" class="attribute-generator" value="' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + '" name="options[' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('group-id') + '][' + $('.js-attribute-checkbox[data-value="'+e.attrs.value+'"]').data('value') + ']" />');
+        }
+      });
+
+      /** On event "tokenfield:removedtoken" : remove stored attributes input when remove token */
+      $('#form_step3_attributes').on('tokenfield:removedtoken', function(e) {
+        $('#attribute-generator-' + e.attrs.value).remove();
+      });
+    });
     },
-    'send': function() {
-      send();
+      'send': function(redirect, target, callBack) {
+      send(redirect, target, callBack);
     },
-    'switchLanguage': function(iso_code) {
+      'switchLanguage': function(iso_code) {
       switchLanguage(iso_code);
     }
   };
@@ -1114,10 +967,12 @@ var form = (function() {
 var customFieldCollection = (function() {
 
   var collectionHolder = $('ul.customFieldCollection');
+  var maxCollectionChildren = collectionHolder.children().length;
 
   /** Add a custom field */
   function add() {
-    var newForm = collectionHolder.attr('data-prototype').replace(/__name__/g, collectionHolder.children().length);
+    var newForm = collectionHolder.attr('data-prototype').replace(/__name__/g, maxCollectionChildren);
+    maxCollectionChildren += 1;
     collectionHolder.append('<li>' + newForm + '</li>');
   }
 
@@ -1320,6 +1175,11 @@ var attachmentProduct = (function() {
         $('#form_step6_attachment_product_description').val('');
       }
 
+      function replaceEndingIdFromUrl(url, newId)
+      {
+        return url.replace(/\/\d+(?!.*\/\d+)((?=\?.*))?/, '/' + newId);
+      }
+
       /** add attachment */
       $('#form_step6_attachment_product_add').click(function() {
         var _this = $(this);
@@ -1333,7 +1193,7 @@ var attachmentProduct = (function() {
 
         $.ajax({
           type: 'POST',
-          url: $('#form_step6_attachment_product').attr('data-action').replace(/\/\d+(?=\?.*)/, '/' + id_product),
+          url: replaceEndingIdFromUrl($('#form_step6_attachment_product').attr('data-action'), id_product),
           data: data,
           contentType: false,
           processData: false,
@@ -1459,6 +1319,7 @@ var imagesProduct = (function() {
         thumbnailWidth: 250,
         thumbnailHeight: null,
         acceptedFiles: 'image/*',
+        timeout: 0,
         dictRemoveFile: translate_javascripts['Delete'],
         dictFileTooBig: translate_javascripts['ToLargeFile'],
         dictCancelUpload: translate_javascripts['Delete'],
@@ -1561,6 +1422,7 @@ var imagesProduct = (function() {
           });
 
           dropZoneElem.disableSelection();
+          imagesProduct.initExpander();
         }
       };
 
@@ -1606,6 +1468,9 @@ var formImagesProduct = (function() {
     'form': function(id) {
       dropZoneElem.find(".dz-preview.active").removeClass("active");
       dropZoneElem.find(".dz-preview[data-id='"+id+"']").addClass("active");
+      if(imagesProduct.shouldDisplayExpander() == false){
+        dropZoneElem.css('height','auto');
+      }
       $.ajax({
         url: dropZoneElem.find(".dz-preview[data-id='"+id+"']").attr('url-update'),
         success: function(response) {
@@ -1674,6 +1539,7 @@ var formImagesProduct = (function() {
     },
     'close': function() {
       toggleColDropzone(true);
+      dropZoneElem.css('height','');
       formZoneElem.find('#product-images-form').html('');
       formZoneElem.hide();
       dropZoneElem.find(".dz-preview.active").removeClass("active");
@@ -1697,26 +1563,26 @@ var priceCalculation = (function() {
 
   /**
    * Add taxes to a price
-   * @param {float} Price without tax
-   * @param {array} Rates rates to apply
-   * @param {int} computation_method The computation calculate method
+   * @param {Number} price - Price without tax
+   * @param {Number[]} rates - Rates to apply
+   * @param {Number} computationMethod The computation calculate method
    */
-  function addTaxes(price, rates, computation_method) {
+  function addTaxes(price, rates, computationMethod) {
     var price_with_taxes = price;
 
     var i = 0;
-    if (computation_method === '0') {
+    if (computationMethod === '0') {
       for (i in rates) {
         price_with_taxes *= (1.00 + parseFloat(rates[i]) / 100.00);
         break;
       }
-    } else if (computation_method === '1') {
+    } else if (computationMethod === '1') {
       var rate = 0;
       for (i in rates) {
         rate += rates[i];
       }
       price_with_taxes *= (1.00 + parseFloat(rate) / 100.00);
-    } else if (computation_method === '2') {
+    } else if (computationMethod === '2') {
       for (i in rates) {
         price_with_taxes *= (1.00 + parseFloat(rates[i]) / 100.00);
       }
@@ -1727,24 +1593,24 @@ var priceCalculation = (function() {
 
   /**
    * Remove taxes from a price
-   * @param {float} Price with tax
-   * @param {array} Rates rates to apply
-   * @param {int} computation_method The computation calculate method
+   * @param {Number} price - Price with tax
+   * @param {Number[]} rates - Rates to apply
+   * @param {Number} computationMethod - The computation method
    */
-  function removeTaxes(price, rates, computation_method) {
+  function removeTaxes(price, rates, computationMethod) {
     var i = 0;
-    if (computation_method === '0') {
+    if (computationMethod === '0') {
       for (i in rates) {
         price /= (1 + rates[i] / 100);
         break;
       }
-    } else if (computation_method === '1') {
+    } else if (computationMethod === '1') {
       var rate = 0;
       for (i in rates) {
         rate += rates[i];
       }
       price /= (1 + rate / 100);
-    } else if (computation_method === '2') {
+    } else if (computationMethod === '2') {
       for (i in rates) {
         price /= (1 + rates[i] / 100);
       }
@@ -1753,22 +1619,33 @@ var priceCalculation = (function() {
     return price;
   }
 
+  /**
+   *
+   * @return {Number}
+   */
   function getEcotaxTaxIncluded() {
     var displayPrecision = 6;
-    if ( ecoTaxElem.val() == 0) {
-      return ecoTaxElem.val();
-    }
-    var ecotax_tax_excl = ecoTaxElem.val().replace(/,/g, '.') / (1 + ecoTaxRate);
+    var ecoTax = Tools.parseFloatFromString(ecoTaxElem.val());
 
-    return ps_round(ecotax_tax_excl * (1 + ecoTaxRate), displayPrecision);
+    if (isNaN(ecoTax)) {
+      ecoTax = 0;
+    }
+
+    if (ecoTax === 0) {
+      return ecoTax;
+    }
+    var ecotaxTaxExcl = ecoTax / (1 + ecoTaxRate);
+
+    return ps_round(ecotaxTaxExcl * (1 + ecoTaxRate), displayPrecision);
   }
 
   function getEcotaxTaxExcluded() {
-    return ecoTaxElem.val().replace(/,/g, '.') / (1 + ecoTaxRate);
+    return Tools.parseFloatFromString(ecoTaxElem.val()) / (1 + ecoTaxRate);
   }
 
   return {
-    'init': function() {
+
+    init: function () {
       /** on update tax recalculate tax include price */
       taxElem.change(function() {
         if (reTaxElem.val() !== taxElem.val()) {
@@ -1814,10 +1691,10 @@ var priceCalculation = (function() {
         var taxExcludedPrice = priceCalculation.normalizePrice($('#form_step2_price').val());
         var taxIncludedPrice = priceCalculation.normalizePrice($('#form_step2_price_ttc').val());
 
-        formatCurrencyCldr(parseFloat(taxExcludedPrice), function(result) {
+        formatCurrencyCldr(taxExcludedPrice, function(result) {
           $('#final_retail_price_te').text(result);
         });
-        formatCurrencyCldr(parseFloat(taxIncludedPrice), function(result) {
+        formatCurrencyCldr(taxIncludedPrice, function(result) {
           $('#final_retail_price_ti').text(result);
         });
       });
@@ -1836,82 +1713,141 @@ var priceCalculation = (function() {
       $(document).on('keyup', '.combination-form .attribute_priceTI', function() {
         priceCalculation.impactTaxExclude($(this));
       });
+      /** combinations : update wholesale price, unity and price TE field on blur */
+      $(document).on('blur','.combination-form .attribute_wholesale_price,.combination-form .attribute_unity,.combination-form .attribute_priceTE', function(){
+        $(this).val(priceCalculation.normalizePrice($(this).val()));
+      });
 
       priceCalculation.taxInclude();
 
       $('#form_step2_price, #form_step2_price_ttc').change();
     },
-    'normalizePrice': function (price) {
-      price = parseFloat(price.replace(/,/g, '.'));
 
-      if (isNaN(price) || price === '') {
-        price = 0;
-      }
-
-      return price;
+    /**
+     * Converts a price string into a number
+     * @param {String} price
+     * @return {Number}
+     */
+    normalizePrice: function (price) {
+      return Tools.parseFloatFromString(price, true);
     },
-    'addCurrentTax': function (price) {
-      var rates = taxElem.find('option:selected').attr('data-rates').split(',');
+
+    /**
+     * Adds taxes to a price
+     * @param {Number} price Price without taxes
+     * @return {Number} Price with added taxes
+     */
+    addCurrentTax: function (price) {
+      var rates = this.getRates();
       var computation_method = taxElem.find('option:selected').attr('data-computation-method');
-      var priceWithTaxes = new Number(ps_round(addTaxes(price, rates, computation_method), displayPricePrecision));
-      var ecotaxIncluded = new Number(getEcotaxTaxIncluded());
+      var priceWithTaxes = Number(ps_round(addTaxes(price, rates, computation_method), displayPricePrecision));
+      var ecotaxIncluded = Number(getEcotaxTaxIncluded());
 
       return priceWithTaxes + ecotaxIncluded;
     },
-    'taxInclude': function() {
+
+    /**
+     * Calculates the price with taxes and updates the elements containing it
+     */
+    taxInclude: function () {
       var newPrice = truncateDecimals(this.addCurrentTax(this.normalizePrice(priceHTElem.val())), 6);
 
       priceTTCElem.val(newPrice).change();
       priceTTCShorcutElem.val(newPrice).change();
     },
-    'removeCurrentTax': function (price) {
-      var rates = taxElem.find('option:selected').attr('data-rates').split(',');
+
+    /**
+     * Removes taxes from a price
+     * @param {Number} price Price with taxes
+     * @return {Number} Price without taxes
+     */
+    removeCurrentTax: function (price) {
+      var rates = this.getRates();
       var computation_method = taxElem.find('option:selected').attr('data-computation-method');
 
       return ps_round(removeTaxes(ps_round(price - getEcotaxTaxIncluded(), displayPricePrecision), rates, computation_method), displayPricePrecision);
     },
-    'taxExclude': function() {
+
+    /**
+     * Calculates the price without taxes and updates the elements containing it
+     */
+    taxExclude: function () {
       var newPrice = truncateDecimals(this.removeCurrentTax(this.normalizePrice(priceTTCElem.val())), 6);
 
       priceHTElem.val(newPrice).change();
       priceHTShortcutElem.val(newPrice).change();
     },
-    'impactTaxInclude': function(obj) {
-      var price = this.normalizePrice(obj.val());
-      var targetInput = obj.closest('div[id^="combination_form_"]').find('input.attribute_priceTI');
-      if (isNaN(price)) {
-        targetInput.val(0);
-        return;
-      }
-      var rates = taxElem.find('option:selected').attr('data-rates').split(',');
-      var computation_method = taxElem.find('option:selected').attr('data-computation-method');
-      var newPrice = ps_round(addTaxes(price, rates, computation_method), 6);
-      newPrice = truncateDecimals(newPrice, 6);
 
-      targetInput.val(newPrice);
+    /**
+     * Calculates and displays the impact on price (including tax) for a combination
+     * @param {jQuery} obj
+     */
+    impactTaxInclude: function (obj) {
+      var price = Tools.parseFloatFromString(obj.val());
+      var targetInput = obj.closest('div[id^="combination_form_"]').find('input.attribute_priceTI');
+      var newPrice = 0;
+
+      if (!isNaN(price)) {
+        var rates = this.getRates();
+        var computation_method = taxElem.find('option:selected').attr('data-computation-method');
+        newPrice = ps_round(addTaxes(price, rates, computation_method), 6);
+        newPrice = truncateDecimals(newPrice, 6);
+      }
+
+      targetInput
+        .val(newPrice)
+        .trigger('change')
+      ;
     },
-    'impactFinalPrice': function(obj) {
+
+    /**
+     * Calculates and displays the final price for a combination
+     * @param {jQuery} obj
+     */
+    impactFinalPrice: function (obj) {
       var price = this.normalizePrice(obj.val());
       var finalPrice = obj.closest('div[id^="combination_form_"]').find('.final-price');
       var defaultFinalPrice = finalPrice.attr('data-price');
-      var priceToBeChanged = new Number(price) + new Number(defaultFinalPrice);
+      var priceToBeChanged = Number(price) + Number(defaultFinalPrice);
       priceToBeChanged = truncateDecimals(priceToBeChanged, 6);
 
       finalPrice.html(priceToBeChanged);
     },
-    'impactTaxExclude': function(obj) {
-      var price = this.normalizePrice(obj.val());
-      var targetInput = obj.closest('div[id^="combination_form_"]').find('input.attribute_priceTE');
-      if (isNaN(price)) {
-        targetInput.val(0);
-        return;
-      }
-      var rates = taxElem.find('option:selected').attr('data-rates').split(',');
-      var computation_method = taxElem.find('option:selected').attr('data-computation-method');
-      var newPrice = removeTaxes(ps_round(price, displayPricePrecision), rates, computation_method);
-      newPrice = truncateDecimals(newPrice, 6);
 
-      targetInput.val(newPrice);
+    /**
+     * Calculates and displays the impact on price (excluding tax) for a combination
+     * @param {jQuery} obj
+     */
+    impactTaxExclude: function (obj) {
+      var price = Tools.parseFloatFromString(obj.val());
+      var targetInput = obj.closest('div[id^="combination_form_"]').find('input.attribute_priceTE');
+      var newPrice = 0;
+
+      if (!isNaN(price)) {
+        var rates = this.getRates();
+        var computation_method = taxElem.find('option:selected').attr('data-computation-method');
+        newPrice = removeTaxes(ps_round(price, displayPricePrecision), rates, computation_method);
+        newPrice = truncateDecimals(newPrice, 6);
+      }
+
+      targetInput
+        .val(newPrice)
+        .trigger('change')
+      ;
+    },
+
+    /**
+     * Returns the tax rates that apply
+     * @return {Number[]}
+     */
+    getRates: function () {
+      return taxElem
+        .find('option:selected')
+        .attr('data-rates')
+        .split(',')
+        .map(function(rate) {
+          return Tools.parseFloatFromString(rate, true);
+        });
     }
   };
 })();
@@ -1921,31 +1857,53 @@ var priceCalculation = (function() {
  */
 var seo = (function() {
   var redirectTypeElem = $('#form_step5_redirect_type');
+  var productRedirect = $('#id-product-redirected');
 
   /** Hide or show the input product selector */
   function hideShowRedirectToProduct() {
-    if (redirectTypeElem.val() === '404') {
+    if ('404' === redirectTypeElem.val()) {
       $('#id-product-redirected').hide();
     } else {
+      updateRemoteUrl();
       $('#id-product-redirected').show();
     }
   }
-    /** Update friendly URL */
-    var updateFriendlyUrl = function(elem) {
-        /** Attr name equals "form[step1][name][1]".
-         * We need in this string the second integer */
-        var id_lang = elem.attr('name').match(/\d+/g)[1];
-        $('#form_step5_link_rewrite_' + id_lang).val(str2url(elem.val(), 'UTF-8'));
-    };
 
+  function updateRemoteUrl() {
+    switch(redirectTypeElem.val()) {
+      case '301-category':
+      case '302-category':
+        productRedirect.find('label').html(redirectTypeElem.attr('data-labelcategory'));
+        productRedirect.find('input').attr('placeholder', redirectTypeElem.attr('data-placeholdercategory'));
+        productRedirect.find('.typeahead-hint').text(redirectTypeElem.attr('data-hintcategory'));
+        break;
+      default:
+        productRedirect.find('label').html(redirectTypeElem.attr('data-labelproduct'));
+        productRedirect.find('input').attr('placeholder', redirectTypeElem.attr('data-placeholderproduct'));
+        productRedirect.find('.typeahead-hint').text('');
+    }
+
+    productRedirect.find('.autocomplete-search').attr('data-remoteurl', redirectTypeElem.find('option:selected').data('remoteurl'));
+    productRedirect.find('.autocomplete-search').trigger('buildTypeahead');
+  }
+
+  /** Update friendly URL */
+  var updateFriendlyUrl = function(elem) {
+      /** Attr name equals "form[step1][name][1]".
+       * We need in this string the second integer */
+      var id_lang = elem.attr('name').match(/\d+/g)[1];
+      $('#form_step5_link_rewrite_' + id_lang).val(str2url(elem.val(), 'UTF-8'));
+  };
 
   return {
     'init': function() {
 
       hideShowRedirectToProduct();
+      updateRemoteUrl();
 
       /** On redirect type select change */
       redirectTypeElem.change(function() {
+        productRedirect.find('#form_step5_id_type_redirected-data').html('');
         hideShowRedirectToProduct();
       });
 
@@ -1980,7 +1938,9 @@ var seo = (function() {
 var tags = (function() {
   return {
     'init': function() {
-      $('#form_step6_tags .tokenfield').tokenfield();
+      $('#form_step6_tags .tokenfield').tokenfield({
+        minWidth: '768px'
+      });
     }
   };
 })();

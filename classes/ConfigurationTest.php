@@ -1,13 +1,13 @@
 <?php
 /**
- * 2007-2016 PrestaShop
+ * 2007-2019 PrestaShop SA and Contributors
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to license@prestashop.com so we can send you a copy immediately.
@@ -16,11 +16,11 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
+ * needs please refer to https://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2016 PrestaShop SA
- * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 class ConfigurationTestCore
@@ -55,17 +55,18 @@ class ConfigurationTestCore
     {
         $tests = array(
             'upload' => false,
-            'cache_dir' => 'app/cache',
-            'log_dir' => 'app/logs',
+            'cache_dir' => 'var/cache',
+            'log_dir' => 'var/logs',
             'img_dir' => 'img',
             'module_dir' => 'modules',
-            'theme_lang_dir' => 'themes/'._THEME_NAME_.'/lang/',
-            'theme_pdf_lang_dir' => 'themes/'._THEME_NAME_.'/pdf/lang/',
-            'theme_cache_dir' => 'themes/'._THEME_NAME_.'/cache/',
+            'theme_lang_dir' => 'themes/' . _THEME_NAME_ . '/lang/',
+            'theme_pdf_lang_dir' => 'themes/' . _THEME_NAME_ . '/pdf/lang/',
+            'theme_cache_dir' => 'themes/' . _THEME_NAME_ . '/cache/',
             'translations_dir' => 'translations',
             'customizable_products_dir' => 'upload',
             'virtual_products_dir' => 'download',
             'config_sf2_dir' => 'app/config',
+            'translations_sf2' => 'app/Resources/translations',
         );
 
         if (!defined('_PS_HOST_MODE_')) {
@@ -88,6 +89,7 @@ class ConfigurationTestCore
                 'simplexml' => false,
                 'zip' => false,
                 'fileinfo' => false,
+                'intl' => false,
             ));
         }
 
@@ -104,11 +106,12 @@ class ConfigurationTestCore
     {
         return array(
             'new_phpversion' => false,
-            'fopen' => false,
             'gz' => false,
             'mbstring' => false,
             'dom' => false,
             'pdo_mysql' => false,
+            'fopen' => false,
+            'intl' => false,
         );
     }
 
@@ -131,7 +134,7 @@ class ConfigurationTestCore
 
     public static function run($ptr, $arg = 0)
     {
-        if (call_user_func(array('ConfigurationTest', 'test_'.$ptr), $arg)) {
+        if (call_user_func(array('ConfigurationTest', 'test_' . $ptr), $arg)) {
             return 'ok';
         }
 
@@ -140,12 +143,13 @@ class ConfigurationTestCore
 
     public static function test_phpversion()
     {
-        return version_compare(substr(phpversion(), 0, 5), '5.4.0', '>=');
+        return version_compare(PHP_VERSION, '7.1.3', '>=');
     }
 
     public static function test_apache_mod_rewrite()
     {
-        if (strpos(strtolower($_SERVER['SERVER_SOFTWARE']), 'apache') === false || !function_exists('apache_get_modules')) {
+        if (isset($_SERVER['SERVER_SOFTWARE'])
+            && strpos(strtolower($_SERVER['SERVER_SOFTWARE']), 'apache') === false || !function_exists('apache_get_modules')) {
             return true;
         }
 
@@ -154,12 +158,17 @@ class ConfigurationTestCore
 
     public static function test_new_phpversion()
     {
-        return version_compare(substr(phpversion(), 0, 5), '5.4.0', '>=');
+        return version_compare(PHP_VERSION, '7.1.3', '>=');
     }
 
     public static function test_mysql_support()
     {
         return extension_loaded('mysql') || extension_loaded('mysqli') || extension_loaded('pdo_mysql');
+    }
+
+    public static function test_intl()
+    {
+        return extension_loaded('intl');
     }
 
     public static function test_pdo_mysql()
@@ -174,7 +183,7 @@ class ConfigurationTestCore
 
     public static function test_fopen()
     {
-        return ini_get('allow_url_fopen');
+        return in_array(ini_get('allow_url_fopen'), array('On', 'on', '1'));
     }
 
     public static function test_system($funcs)
@@ -197,7 +206,7 @@ class ConfigurationTestCore
     {
         return function_exists('imagecreatetruecolor');
     }
-    
+
     public static function test_json()
     {
         return extension_loaded('json');
@@ -229,17 +238,16 @@ class ConfigurationTestCore
 
     public static function test_dir($relative_dir, $recursive = false, &$full_report = null)
     {
-        $dir = rtrim(_PS_ROOT_DIR_, '\\/').DIRECTORY_SEPARATOR.trim($relative_dir, '\\/');
+        $dir = rtrim(_PS_ROOT_DIR_, '\\/') . DIRECTORY_SEPARATOR . trim($relative_dir, '\\/');
         if (!file_exists($dir) || !$dh = @opendir($dir)) {
             $full_report = sprintf('Directory %s does not exist or is not writable', $dir); // sprintf for future translation
             return false;
         }
-        $dummy = rtrim($dir, '\\/').DIRECTORY_SEPARATOR.uniqid();
+        closedir($dh);
+        $dummy = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR . uniqid();
         if (@file_put_contents($dummy, 'test')) {
             @unlink($dummy);
             if (!$recursive) {
-                closedir($dh);
-
                 return true;
             }
         } elseif (!is_writable($dir)) {
@@ -248,23 +256,19 @@ class ConfigurationTestCore
         }
 
         if ($recursive) {
-            while (($file = readdir($dh)) !== false) {
-                if (is_dir($dir.DIRECTORY_SEPARATOR.$file) && $file != '.' && $file != '..' && $file != '.svn') {
-                    if (!ConfigurationTest::test_dir($relative_dir.DIRECTORY_SEPARATOR.$file, $recursive, $full_report)) {
-                        return false;
-                    }
+            foreach (Tools::getDirectories($dir) as $file) {
+                if (!ConfigurationTest::test_dir($relative_dir . DIRECTORY_SEPARATOR . $file, $recursive, $full_report)) {
+                    return false;
                 }
             }
         }
-
-        closedir($dh);
 
         return true;
     }
 
     public static function test_file($file_relative)
     {
-        $file = _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.$file_relative;
+        $file = _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . $file_relative;
 
         return file_exists($file) && is_writable($file);
     }
@@ -341,7 +345,7 @@ class ConfigurationTestCore
 
     public static function test_theme_lang_dir($dir)
     {
-        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/').DIRECTORY_SEPARATOR.trim($dir, '\\/');
+        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/') . DIRECTORY_SEPARATOR . trim($dir, '\\/');
         if (!file_exists($absoluteDir)) {
             return true;
         }
@@ -351,7 +355,7 @@ class ConfigurationTestCore
 
     public static function test_theme_pdf_lang_dir($dir)
     {
-        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/').DIRECTORY_SEPARATOR.trim($dir, '\\/');
+        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/') . DIRECTORY_SEPARATOR . trim($dir, '\\/');
         if (!file_exists($absoluteDir)) {
             return true;
         }
@@ -361,7 +365,7 @@ class ConfigurationTestCore
 
     public static function test_theme_cache_dir($dir)
     {
-        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/').DIRECTORY_SEPARATOR.trim($dir, '\\/');
+        $absoluteDir = rtrim(_PS_ROOT_DIR_, '\\/') . DIRECTORY_SEPARATOR . trim($dir, '\\/');
         if (!file_exists($absoluteDir)) {
             return true;
         }
@@ -397,6 +401,7 @@ class ConfigurationTestCore
 
         return is_writable($path);
     }
+
     public static function test_dom()
     {
         return extension_loaded('Dom');
@@ -406,9 +411,9 @@ class ConfigurationTestCore
     {
         $return = array();
         foreach (ConfigurationTest::$test_files as $file) {
-            if (!file_exists(rtrim(_PS_ROOT_DIR_, DIRECTORY_SEPARATOR).str_replace('/', DIRECTORY_SEPARATOR, $file))) {
+            if (!file_exists(rtrim(_PS_ROOT_DIR_, DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $file))) {
                 if ($full) {
-                    array_push($return, $file);
+                    $return[] = $file;
                 } else {
                     return false;
                 }
@@ -420,5 +425,10 @@ class ConfigurationTestCore
         }
 
         return true;
+    }
+
+    public static function test_translations_sf2($dir)
+    {
+        return ConfigurationTest::test_dir($dir);
     }
 }
