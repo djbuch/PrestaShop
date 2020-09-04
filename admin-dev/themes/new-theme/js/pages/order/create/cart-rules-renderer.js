@@ -1,10 +1,11 @@
 /**
- * 2007-2019 PrestaShop SA and Contributors
+ * Copyright since 2007 PrestaShop SA and Contributors
+ * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
  *
  * NOTICE OF LICENSE
  *
  * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
+ * that is bundled with this package in the file LICENSE.md.
  * It is also available through the world-wide-web at this URL:
  * https://opensource.org/licenses/OSL-3.0
  * If you did not receive a copy of the license and are unable to
@@ -15,25 +16,25 @@
  *
  * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
  * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to https://www.prestashop.com for more information.
+ * needs please refer to https://devdocs.prestashop.com/ for more information.
  *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2019 PrestaShop SA and Contributors
+ * @author    PrestaShop SA and Contributors <contact@prestashop.com>
+ * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
- * International Registered Trademark & Property of PrestaShop SA
  */
 
-import createOrderPageMap from './create-order-map';
+import createOrderMap from './create-order-map';
 
-const $ = window.$;
+const {$} = window;
 
 /**
  * Renders cart rules (cartRules) block
  */
 export default class CartRulesRenderer {
   constructor() {
-    this.$cartRulesBlock = $(createOrderPageMap.cartRulesBlock);
-    this.$cartRulesTable = $(createOrderPageMap.cartRulesTable);
+    this.$cartRulesBlock = $(createOrderMap.cartRulesBlock);
+    this.$cartRulesTable = $(createOrderMap.cartRulesTable);
+    this.$searchResultBox = $(createOrderMap.cartRulesSearchResultBox);
   }
 
   /**
@@ -42,23 +43,109 @@ export default class CartRulesRenderer {
    * @param {Array} cartRules
    * @param {Boolean} emptyCart
    */
-  render(cartRules, emptyCart) {
-    this._hideError();
+  renderCartRulesBlock(cartRules, emptyCart) {
+    this.hideErrorBlock();
     // do not render cart rules block at all if cart has no products
     if (emptyCart) {
-      this._hideCartRulesBlock();
+      this.hideCartRulesBlock();
       return;
     }
-    this._showCartRulesBlock();
+    this.showCartRulesBlock();
 
     // do not render cart rules list when there are no cart rules
     if (cartRules.length === 0) {
-      this._hideCartRulesList();
+      this.hideCartRulesList();
 
       return;
     }
 
-    this._renderList(cartRules);
+    this.renderList(cartRules);
+  }
+
+  /**
+   * Responsible for rendering search results dropdown
+   *
+   * @param searchResults
+   */
+  renderSearchResults(searchResults) {
+    this.clearSearchResults();
+
+    if (searchResults.cart_rules.length === 0) {
+      this.renderNotFound();
+    } else {
+      this.renderFoundCartRules(searchResults.cart_rules);
+    }
+
+    this.showResultsDropdown();
+  }
+
+  /**
+   * Displays error message bellow search input
+   *
+   * @param message
+   */
+  displayErrorMessage(message) {
+    $(createOrderMap.cartRuleErrorText).text(message);
+    this.showErrorBlock();
+  }
+
+  /**
+   * Hides cart rules search result dropdown
+   */
+  hideResultsDropdown() {
+    this.$searchResultBox.addClass('d-none');
+  }
+
+  /**
+   * Displays cart rules search result dropdown
+   *
+   * @private
+   */
+  showResultsDropdown() {
+    this.$searchResultBox.removeClass('d-none');
+  }
+
+  /**
+   * Renders warning that no cart rule was found
+   *
+   * @private
+   */
+  renderNotFound() {
+    const $template = $($(createOrderMap.cartRulesNotFoundTemplate).html()).clone();
+    this.$searchResultBox.html($template);
+  }
+
+
+  /**
+   * Empties cart rule search results block
+   *
+   * @private
+   */
+  clearSearchResults() {
+    this.$searchResultBox.empty();
+  }
+
+  /**
+   * Renders found cart rules after search
+   *
+   * @param cartRules
+   *
+   * @private
+   */
+  renderFoundCartRules(cartRules) {
+    const $cartRuleTemplate = $($(createOrderMap.foundCartRuleTemplate).html());
+    Object.values(cartRules).forEach((cartRule) => {
+      const $template = $cartRuleTemplate.clone();
+
+      let cartRuleName = cartRule.name;
+      if (cartRule.code !== '') {
+        cartRuleName = `${cartRule.name} - ${cartRule.code}`;
+      }
+
+      $template.text(cartRuleName);
+      $template.data('cart-rule-id', cartRule.cartRuleId);
+      this.$searchResultBox.append($template);
+    });
   }
 
   /**
@@ -68,32 +155,40 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _renderList(cartRules) {
-    this._cleanCartRulesList();
-    const $cartRulesTableRowTemplate = $($(createOrderPageMap.cartRulesTableRowTemplate).html());
+  renderList(cartRules) {
+    this.cleanCartRulesList();
+    const $cartRulesTableRowTemplate = $($(createOrderMap.cartRulesTableRowTemplate).html());
 
-    for (const key in cartRules) {
-      const cartRule = cartRules[key];
+    Object.values(cartRules).forEach((cartRule) => {
       const $template = $cartRulesTableRowTemplate.clone();
 
-      $template.find(createOrderPageMap.cartRuleNameField).text(cartRule.name);
-      $template.find(createOrderPageMap.cartRuleDescriptionField).text(cartRule.description);
-      $template.find(createOrderPageMap.cartRuleValueField).text(cartRule.value);
-      $template.find(createOrderPageMap.cartRuleDeleteBtn).data('cart-rule-id', cartRule.cartRuleId);
+      $template.find(createOrderMap.cartRuleNameField).text(cartRule.name);
+      $template.find(createOrderMap.cartRuleDescriptionField).text(cartRule.description);
+      $template.find(createOrderMap.cartRuleValueField).text(cartRule.value);
+      $template.find(createOrderMap.cartRuleDeleteBtn).data('cart-rule-id', cartRule.cartRuleId);
 
       this.$cartRulesTable.find('tbody').append($template);
-    }
+    });
 
-    this._showCartRulesList();
+    this.showCartRulesList();
   }
 
   /**
-   * Hides error block which can be visible after cart rules search
+   * Shows error block
    *
    * @private
    */
-  _hideError() {
-    $(createOrderPageMap.cartRuleErrorBlock).addClass('d-none');
+  showErrorBlock() {
+    $(createOrderMap.cartRuleErrorBlock).removeClass('d-none');
+  }
+
+  /**
+   * Hides error block
+   *
+   * @private
+   */
+  hideErrorBlock() {
+    $(createOrderMap.cartRuleErrorBlock).addClass('d-none');
   }
 
   /**
@@ -101,7 +196,7 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _showCartRulesBlock() {
+  showCartRulesBlock() {
     this.$cartRulesBlock.removeClass('d-none');
   }
 
@@ -110,7 +205,7 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _hideCartRulesBlock() {
+  hideCartRulesBlock() {
     this.$cartRulesBlock.addClass('d-none');
   }
 
@@ -119,7 +214,7 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _showCartRulesList() {
+  showCartRulesList() {
     this.$cartRulesTable.removeClass('d-none');
   }
 
@@ -128,7 +223,7 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _hideCartRulesList() {
+  hideCartRulesList() {
     this.$cartRulesTable.addClass('d-none');
   }
 
@@ -137,7 +232,7 @@ export default class CartRulesRenderer {
    *
    * @private
    */
-  _cleanCartRulesList() {
+  cleanCartRulesList() {
     this.$cartRulesTable.find('tbody').empty();
   }
 }
